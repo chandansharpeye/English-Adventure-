@@ -46,7 +46,7 @@
         <div class="hero-actions">
           <button class="primary-btn" id="continue-btn">Continue learning <span>→</span></button>
           <button class="secondary-btn" id="language-toggle">Mode: Odia → English</button>
-          <button class="secondary-btn hidden" id="install-btn">📲 Install app</button>
+          <button class="secondary-btn" id="install-btn">📲 Install app</button>
         </div>
       </div>
       <div class="robot-area" aria-label="Friendly robot teacher">
@@ -139,6 +139,10 @@
       <div class="sheet-top"><h2 id="sheet-title"></h2><button class="icon-btn" id="close-sheet" aria-label="Close">✕</button></div>
       <div id="sheet-body"></div>
     </div>
+  </div>
+  <div class="install-banner hidden" id="install-banner" role="region" aria-label="Install app">
+    <img src="assets/icon-192.png" alt="" width="40" height="40"><span id="banner-text"></span>
+    <button class="primary-btn" id="banner-install">Install</button><button class="icon-btn" id="banner-close" aria-label="Dismiss">✕</button>
   </div>
   <canvas id="confetti" class="hidden" aria-hidden="true"></canvas>
   <div class="toast hidden" id="toast" role="status"></div>

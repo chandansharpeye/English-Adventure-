@@ -1,7 +1,7 @@
 {
   "id": "./",
   "name": "English Adventure",
-  "short_name": "English Adv.",
+  "short_name": "English Adventure",
   "description": "Learn English through games with Odia meanings, a friendly robot teacher, quizzes, music and daily streaks.",
   "start_url": "./?source=pwa",
   "scope": "./",
@@ -109,5 +109,9 @@
       "form_factor": "wide",
       "label": "English Adventure on a big screen"
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }

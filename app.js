@@ -20,7 +20,7 @@ function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replac
 /* ---------------- State ---------------- */
 const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
   wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
-  settings:{sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6}});
+  settings:{sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
 function sanitize(m){const f=freshState();
   ["completed","activeDays","mistakes","wordsSeen","badges"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
   ["xp","hearts","streak","dailyCompleted","bestAccuracy","totalAnswered","totalCorrect","wordIndex","dailyGoal","heartTime","perfectCount","bestCombo","speedBest","mistakesFixed"].forEach(k=>{if(typeof m[k]!=="number"||!isFinite(m[k]))m[k]=f[k];});
@@ -384,6 +384,7 @@ function openSettings(){
     ${sw("set-sound","Sound effects",state.settings.sound)}
     <label class="slider-row"><span>Effects volume</span><input type="range" id="set-svol" min="0" max="100" value="${Math.round(state.settings.sfxVol*100)}"></label>
     ${sw("set-read","Read answers aloud",state.settings.autoRead)}
+    ${isStandalone()?"":'<p class="eyebrow settings-label">APP</p><button class="secondary-btn" id="set-install">📲 Install app</button>'}
     <p class="eyebrow settings-label">THEME</p><div class="chips" id="theme-chips">${[["auto","Auto"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<button class="chip${state.settings.theme===v?" active":""}" data-theme="${v}">${l}</button>`).join("")}</div>
     <p class="eyebrow settings-label">BACKUP & TRANSFER</p><p class="muted">Copy this code to keep your progress safe or move it to another device. Paste a code and tap Restore to load it.</p>
     <textarea id="backup-code" class="backup" rows="3" spellcheck="false" aria-label="Backup code">${esc(b64e(JSON.stringify(state)))}</textarea>
@@ -391,6 +392,7 @@ function openSettings(){
     <p class="eyebrow settings-label">DANGER ZONE</p><button class="secondary-btn danger" id="reset-progress">Reset all progress</button><p class="muted version">English Adventure v2.0</p>`);
   $("set-sound").addEventListener("change",e=>{state.settings.sound=e.target.checked;saveState();renderTopStats();if(e.target.checked)sfx("correct");});
   $("set-read").addEventListener("change",e=>{state.settings.autoRead=e.target.checked;saveState();});
+  const si=$("set-install");if(si)si.addEventListener("click",()=>$("install-btn").click());
   $("set-music").addEventListener("change",e=>{state.settings.music=e.target.checked;gestured=true;saveState();applyMusic();});
   $("set-mvol").addEventListener("input",e=>{state.settings.musicVol=e.target.value/100;gestured=true;if(state.settings.music)applyMusic();});
   $("set-mvol").addEventListener("change",saveState);
@@ -419,16 +421,42 @@ $("sound-btn").addEventListener("click",()=>{state.settings.sound=!state.setting
 $("theme-btn").addEventListener("click",()=>{const dark=document.documentElement.dataset.theme==="dark";state.settings.theme=dark?"light":"dark";saveState();applyTheme();});
 $("music-btn").addEventListener("click",()=>{state.settings.music=!state.settings.music;gestured=true;saveState();applyMusic();showToast(state.settings.music?"Music on 🎵":"Music off");});
 $("settings-btn").addEventListener("click",openSettings);
-/* ---- PWA: install button ---- */
+/* ---- PWA: install button (always visible until the app is installed) ---- */
 let deferredInstall=null;
-const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const launchedAsApp=/[?&](app=1|source=pwa)/.test(location.search);
+const isStandalone=()=>launchedAsApp||matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: minimal-ui)").matches||navigator.standalone===true;
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-function updateInstallBtn(){const b=$("install-btn");if(b)b.classList.toggle("hidden",isStandalone()||!(deferredInstall||isIOS()));}
+const isAndroid=()=>/android/i.test(navigator.userAgent);
+function updateInstallBtn(){const b=$("install-btn");if(b)b.classList.toggle("hidden",isStandalone());}
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;updateInstallBtn();});
 addEventListener("appinstalled",()=>{deferredInstall=null;updateInstallBtn();showToast("App installed! 🎉");});
+function installHelp(){
+  let body;
+  if(location.protocol==="file:")body=`<p class="muted">You opened the game as a file. Browsers can only install an app from a website (https).</p><ol class="steps"><li><b>Windows:</b> use the <b>English-Adventure-Setup.bat</b> installer. It adds a desktop shortcut.</li><li>Or upload the game to <b>GitHub Pages</b> and open that link on your phone.</li></ol>`;
+  else if(isIOS())body=`<ol class="steps"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button ⬆️.</li><li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol>`;
+  else if(isAndroid())body=`<ol class="steps"><li>Open this page in <b>Chrome</b>.</li><li>Tap the <b>⋮</b> menu at the top right.</li><li>Tap <b>Install app</b> (or <b>Add to Home screen</b>).</li></ol>`;
+  else body=`<ol class="steps"><li><b>Chrome:</b> click the install icon ⊕ at the right end of the address bar, or ⋮ → <b>Cast, save and share → Install page as app</b>.</li><li><b>Edge:</b> ⋯ → <b>Apps → Install this site as an app</b>.</li></ol>`;
+  openSheet("Install English Adventure",body+`<div class="checks" id="pwa-checks"><b>Install check</b><span>Checking…</span></div><p class="muted">Not showing? Reload the page once, wait 5 seconds, and try again. The site must be opened with <b>https://</b>.</p>`);
+  if(location.protocol!=="file:")pwaStatus().then(rows=>{const box=$("pwa-checks");if(box)box.innerHTML="<b>Install check</b>"+rows.map(([ok,t])=>`<span class="${ok?"ok":"bad"}">${ok===true?"✅":ok===false?"❌":"⬜"} ${t}</span>`).join("");});}
+async function pwaStatus(){
+  const rows=[[window.isSecureContext,"Secure connection (https)"]];let man=false,sw=false;
+  try{const r=await fetch(document.querySelector('link[rel="manifest"]').href);const j=await r.json();man=!!(j.icons&&j.icons.length&&j.start_url);}catch{}
+  rows.push([man,"App manifest and icons"]);
+  try{if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.getRegistration();sw=!!(reg&&(reg.active||reg.waiting||reg.installing));}}catch{}
+  rows.push([sw,"Offline engine (service worker)"]);
+  rows.push([isStandalone()?true:null,"Installed on this device"]);
+  return rows;}
+/* ---- friendly install banner (shown once, after a few seconds) ---- */
+function showInstallBanner(){
+  const bn=$("install-banner");if(!bn||isStandalone()||state.settings.bannerDismissed||!(deferredInstall||isIOS()))return;
+  $("banner-text").textContent=isIOS()?"Add English Adventure to your Home Screen for the full app.":"Install English Adventure for a full-screen app that works offline.";
+  bn.classList.remove("hidden");}
+$("banner-install").addEventListener("click",()=>{$("install-banner").classList.add("hidden");$("install-btn").click();});
+$("banner-close").addEventListener("click",()=>{$("install-banner").classList.add("hidden");state.settings.bannerDismissed=true;saveState();});
+setTimeout(showInstallBanner,6000);
 $("install-btn").addEventListener("click",async()=>{
-  if(deferredInstall){deferredInstall.prompt();try{await deferredInstall.userChoice;}catch{}deferredInstall=null;updateInstallBtn();}
-  else if(isIOS())openSheet("Install on iPhone / iPad",`<ol class="steps"><li>Tap the <b>Share</b> button ⬆️ in Safari.</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>. English Adventure now opens like a real app!</li></ol>`);});
+  if(deferredInstall){const d=deferredInstall;deferredInstall=null;try{d.prompt();await d.userChoice;}catch{}updateInstallBtn();return;}
+  installHelp();});
 document.querySelector(".robot-area").addEventListener("click",()=>{const r=document.querySelector(".robot");r.classList.remove("jump");void r.offsetWidth;r.classList.add("jump");$("robot-message").textContent="💡 "+rand(TIPS);sfx("click");});
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){if(!$("sheet-modal").classList.contains("hidden"))closeSheet();else if(!$("lesson-modal").classList.contains("hidden"))closeLesson();return;}

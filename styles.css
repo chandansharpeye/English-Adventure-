@@ -164,3 +164,11 @@ button,.chip,.unit-btn{touch-action:manipulation}
 .slider-row input[type=range]{width:54%;accent-color:var(--purple)}
 .steps{margin:6px 0 0;padding-left:20px;line-height:1.9;font-size:14px;font-weight:700}
 .toast{bottom:calc(22px + env(safe-area-inset-bottom))}
+
+/* ---- install banner & install check ---- */
+.install-banner{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:20;display:flex;align-items:center;gap:10px;max-width:520px;margin:auto;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 40px rgba(45,36,100,.22);font-size:12px;font-weight:800}
+.install-banner img{border-radius:10px;flex:none}.install-banner span{flex:1;line-height:1.4}
+.install-banner .primary-btn{padding:10px 14px}
+[data-theme="dark"] .install-banner{background:#1c1936;border-color:#3a3566}
+.checks{display:grid;gap:6px;margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--lav);font-size:12px;font-weight:800}
+.checks b{font-size:10px;letter-spacing:1.4px;color:var(--purple)}

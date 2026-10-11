@@ -1,54 +1,40 @@
-# English Adventure v2
+# English Adventure — complete PWA (Android · iPhone · PC)
 
-A beginner-friendly English learning game (Odia ⇄ English) for GitHub Pages. Installable as a phone/desktop app (PWA), works offline, and needs no build step.
+Installable, offline-ready English learning game with music, sound effects and voice.
+A PWA installs **only from a website that uses https://**, so first put these files online (free, 5 minutes), then install from that link.
 
-## What's new in v2
-**Learning**
-- 22 lessons (was 12): Family, Food, Body & Animals, Days, Opposites, Build It!, Plurals, Can/Should/Must, Real-Life Talk, Fix the Mistake
-- 5 question types: multiple choice, listening, type the answer, word-arrange sentences, match pairs
-- Wrong answers come back at the end of the lesson (second chance)
-- Mistakes Notebook, Quick Practice, Speed Round (15 s per question), Flashcards (35 words, with sound)
-- English → Odia mode now builds real vocabulary quizzes
+## Step 1 — Put it online (choose ONE)
 
-**Game feel**
-- Combo XP, ranks (Rookie → Legend), 11 badges, daily goals with bonus XP, 7-day streak calendar
-- Hearts refill every 20 minutes (or spend 30 XP); Practice never costs hearts
-- Confetti, animated robot teacher (tap him!), dark mode
+**A. Netlify Drop (easiest, no coding)**
+1. Unzip this file. Open https://app.netlify.com/drop
+2. Drag the whole `English-Adventure` folder onto the page. You get an `https://….netlify.app` link.
 
-**Sound**
-- Soft generative background music (calm chords + gentle bells, no audio files, works offline)
-- Sound effects for correct, wrong, combos, badges, rank-up, hearts, flashcards and the speed-round countdown
-- Text-to-speech: tap 🔊 to hear any English word or sentence; music lowers while the voice speaks
-- Separate music and effects volume sliders in Settings (⚙️)
+**B. GitHub Pages**
+1. Create a **Public** repository, upload every file (index.html must be at the top level, not inside another folder).
+2. Settings → Pages → Deploy from a branch → `main` / `(root)` → Save.
+3. Your link: `https://YOUR-NAME.github.io/REPO-NAME/` (wait 1–3 minutes).
 
-**App (PWA)**
-- New robot icon (regular, maskable and Apple touch icons), install button, home-screen shortcuts (Continue / Quick practice / Flashcards), install-screen screenshots
-- Offline support, safe-area/notch aware, sticky top bar, standalone full-screen mode
-- Backup / restore code in Settings to move progress between devices
+**C. Cloudflare Pages / Vercel** — upload the folder; the included `_headers` and `vercel.json` are already set.
 
-Old v1 progress is kept automatically.
+## Step 2 — Install from your link
+
+| Device | How |
+|---|---|
+| **Android (Chrome)** | Open the link → tap **📲 Install app** (or ⋮ → Install app) |
+| **iPhone / iPad** | Open the link in **Safari** → Share ⬆️ → **Add to Home Screen** (iOS has no install popup; this is the only way) |
+| **Windows / Mac / Linux** | Chrome or Edge → install icon ⊕ in the address bar → Install |
+| **Windows without a website** | Run `English-Adventure-Setup.bat` (separate file) |
+
+Tap **📲 Install app** inside the game to see an **Install check** (https, manifest, offline engine). If one line shows ❌, that is the reason it will not install.
+
+## Troubleshooting
+- Link must start with `https://` (opening `index.html` from a folder can never install).
+- After uploading, open the link, wait ~5 seconds, reload once, then install.
+- Old version showing? Close and reopen the app twice.
+- Music starts after your first tap (browser rule). 🎵 button toggles it.
+
+## Features
+22 lessons · 5 question types · Odia ⇄ English · hearts, XP, ranks, badges, streaks · Speed Round · Flashcards · Mistakes Notebook · soft background music · sound effects · text-to-speech · dark mode · offline · backup code for moving progress.
 
 ## Files
-`index.html` · `styles.css` · `data.js` (lessons, words, badges) · `app.js` (game logic) · `audio.js` (music engine) · `sw.js` (offline) · `manifest.json` · `assets/` (icons, screenshots)
-
-## Run on your PC
-Double-click `index.html` to preview (music, voice and offline need a server or HTTPS). Recommended:
-```bash
-py -m http.server 8000      # then open http://localhost:8000
-```
-
-## Publish free with GitHub Pages
-1. Create a **Public** repository (e.g. `english-adventure`) and upload everything, with `index.html` at the repository root.
-2. **Settings → Pages → Deploy from a branch → `main` / `(root)` → Save.**
-3. Open `https://YOUR-USERNAME.github.io/english-adventure/`
-
-## Install as an app
-- **Android / Chrome / Edge:** open the site and tap **Install app** (or the browser's install option).
-- **iPhone / iPad (Safari):** Share → **Add to Home Screen**.
-
-## Notes
-- Music starts after your first tap (browsers block autoplay). Toggle it with the 🎵 button.
-- Voice quality depends on the voices installed on the device.
-- Progress is stored in this browser. Use Settings → Backup code to move it.
-- After you update the files on GitHub, reopen the app once or twice to receive the new version (service worker cache).
-- Client-side only: don't put passwords or private data in the repository.
+`index.html` `styles.css` `data.js` `app.js` `audio.js` `sw.js` `offline.html` `manifest.json` `assets/` (icons, screenshots) · hosting helpers: `_headers` `netlify.toml` `vercel.json` `.nojekyll`
