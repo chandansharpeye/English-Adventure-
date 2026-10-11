@@ -67,7 +67,7 @@ function rankInfo(){let idx=0;RANKS.forEach((r,i)=>{if(state.xp>=r.xp)idx=i;});c
   return {idx,cur,next,pct:next?Math.round((state.xp-cur.xp)/(next.xp-cur.xp)*100):100};}
 function checkBadges(){const fresh=[];
   BADGES.forEach(b=>{if(!state.badges.includes(b.id)&&b.test(state)){state.badges.push(b.id);fresh.push(b);}});
-  if(fresh.length){saveState();sfx("badge");confetti(70);showToast("🏅 Badge unlocked: "+fresh.map(b=>b.name).join(", "));robotSay("Wow! You unlocked a new badge!");}
+  if(fresh.length){saveState();sfx("badge");confetti(70);showToast("🏅 Badge unlocked: "+fresh.map(b=>b.name).join(", "));robotTalk(["Wow! You unlocked a new badge!","ବାହ୍! ଆପଣ ନୂଆ ବ୍ୟାଜ୍ ଅନଲକ୍ କଲେ!"]);}
   return fresh;}
 
 /* ---------------- Sound & voice ---------------- */
@@ -92,7 +92,7 @@ let gestured=false;
 function applyMusic(){
   if(gestured&&state.settings.music&&!document.hidden){AudioKit.setVolume(state.settings.musicVol);AudioKit.start();}else AudioKit.stop();
   renderTopStats();}
-const unlockAudio=()=>{gestured=true;applyMusic();if(robotPending){const t=robotPending;robotPending=null;speakRobot(t);}["pointerdown","keydown","touchstart"].forEach(e=>removeEventListener(e,unlockAudio));};
+const unlockAudio=()=>{gestured=true;applyMusic();if(robotPending){const t=robotPending;robotPending=null;speakRobot(t.text,t.lang,t.next);}["pointerdown","keydown","touchstart"].forEach(e=>removeEventListener(e,unlockAudio));};
 ["pointerdown","keydown","touchstart"].forEach(e=>addEventListener(e,unlockAudio,{passive:true}));
 function confetti(n){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
@@ -134,28 +134,42 @@ function setTalk(){const b=robotEl();if(b)b.classList.toggle("talk",robotSpeakin
 function typeText(el,text,speed,done){
   if(!el)return;clearInterval(el._t);el.classList.add("typing");el.textContent="";let i=0;
   el._t=setInterval(()=>{el.textContent=text.slice(0,++i);if(i>=text.length){clearInterval(el._t);el.classList.remove("typing");if(done)done();}},speed||26);}
-function speakRobot(text){
-  if(!state.settings.robotVoice||!canSpeak())return;
-  if(!gestured){robotPending=text;return;}            // browsers block voice until the first tap
+function speakRobot(text,lang,next){
+  lang=lang||"en-IN";
+  if(!state.settings.robotVoice||!canSpeak()){if(next)next();return;}
+  if(!gestured){robotPending={text,lang,next};return;}   // browsers block voice until the first tap
   try{
+    const vs=speechSynthesis.getVoices();
+    let voice=vs.find(x=>x.lang===lang)||vs.find(x=>x.lang.toLowerCase().startsWith(lang.slice(0,2).toLowerCase()));
+    if(!voice&&lang==="or-IN"){if(next)next();return;}   // no Odia voice on this device: text only
+    if(!voice)voice=vs.find(x=>/^en/i.test(x.lang));
     speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);u.lang="en-IN";u.rate=1;u.pitch=1.4;
-    const vs=speechSynthesis.getVoices();const v=vs.find(x=>x.lang==="en-IN")||vs.find(x=>/^en/i.test(x.lang));if(v)u.voice=v;
+    const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=lang==="or-IN"?.9:1;u.pitch=1.4;if(voice&&typeof SpeechSynthesisVoice!=="undefined"&&voice instanceof SpeechSynthesisVoice)u.voice=voice;
     u.onstart=()=>{robotSpeaking=true;setTalk();AudioKit.duck(true);};
-    u.onend=u.onerror=()=>{robotSpeaking=false;setTalk();AudioKit.duck(false);};
+    u.onend=u.onerror=()=>{robotSpeaking=false;setTalk();AudioKit.duck(false);if(next)next();};
     speechSynthesis.speak(u);
-  }catch{}}
+  }catch{if(next)next();}}
+/* A line is [English, Odia]. It types both and says English, then Odia if an Odia voice exists. */
+function robotTalk(pair){
+  const bubble=$("robot-message");
+  bubble.innerHTML='<span class="rt-en"></span><span class="rt-or"></span>';
+  robotTyping=true;setTalk();
+  const en=bubble.querySelector(".rt-en"),or=bubble.querySelector(".rt-or");
+  typeText(en,pair[0],22,()=>typeText(or,pair[1],22,()=>{robotTyping=false;setTalk();}));
+  speakRobot(pair[0],"en-IN",()=>speakRobot(pair[1],"or-IN"));}
 function robotSay(text,opts){
   robotTyping=true;setTalk();
   typeText($("robot-message"),text,24,()=>{robotTyping=false;setTalk();});
   if(!opts||opts.speak!==false)speakRobot(text);}
-const ROBOT_IDLE=["Ready for a new word today?","Tap the mic and say a word. Let's practise speaking!","Try a Speed Round. Can you beat your score?","Little practice every day goes a long way.","Tap the flashcards and learn three new words.","Your streak is growing. Keep it up!"];
-const ROBOT_CELEBRATE=["Wonderful! You finished the lesson!","Amazing work! Keep going, champion!","Super job! You are getting better every day!"];
-const ROBOT_TRY=["Good try! Let's practise this one again.","Almost there! You will get it next time."];
+const ROBOT_IDLE=[["Ready for a new word today?","ଆଜି ଏକ ନୂଆ ଶବ୍ଦ ପାଇଁ ପ୍ରସ୍ତୁତ?"],["Tap the mic and say a word. Let's practise speaking!","ମାଇକ୍ ଦବାନ୍ତୁ ଓ ଏକ ଶବ୍ଦ କୁହନ୍ତୁ। ଆସନ୍ତୁ କହିବା ଅଭ୍ୟାସ କରିବା!"],["Try a Speed Round. Can you beat your score?","ସ୍ପିଡ୍ ରାଉଣ୍ଡ ଚେଷ୍ଟା କରନ୍ତୁ। ନିଜ ସ୍କୋର ହରାଇ ପାରିବେ କି?"],["Little practice every day goes a long way.","ପ୍ରତିଦିନ ଟିକିଏ ଅଭ୍ୟାସ ବହୁ ଦୂର ନେଇଯାଏ।"],["Tap the flashcards and learn three new words.","ଫ୍ଲାଶକାର୍ଡ ଦବାନ୍ତୁ ଓ ତିନୋଟି ନୂଆ ଶବ୍ଦ ଶିଖନ୍ତୁ।"],["Your streak is growing. Keep it up!","ଆପଣଙ୍କ ଷ୍ଟ୍ରିକ୍ ବଢ଼ୁଛି। ଏହିପରି ଜାରି ରଖନ୍ତୁ!"]];
+const ROBOT_CELEBRATE=[["Wonderful! You finished the lesson!","ଚମତ୍କାର! ଆପଣ ପାଠ ଶେଷ କରିଲେ!"],["Amazing work! Keep going, champion!","ଅଦ୍ଭୁତ କାମ! ଚାଲୁ ରଖନ୍ତୁ, ଚାମ୍ପିଅନ୍!"],["Super job! You are getting better every day!","ବହୁତ ଭଲ! ଆପଣ ପ୍ରତିଦିନ ଉନ୍ନତ ହେଉଛନ୍ତି!"]];
+const ROBOT_TRY=[["Good try! Let's practise this one again.","ଭଲ ଚେଷ୍ଟା! ଆସନ୍ତୁ ଏହାକୁ ପୁଣି ଅଭ୍ୟାସ କରିବା।"],["Almost there! You will get it next time.","ପ୍ରାୟ ହୋଇଗଲା! ପରବର୍ତ୍ତୀ ଥରେ ଆପଣ ପାରିବେ।"]];
+/* Tips: TIPS_OR[i] is the Odia version of TIPS[i] */
+const TIPS_OR=["ନୂଆ ଇଂରାଜୀ ଶବ୍ଦ ପ୍ରତ୍ୟେକ ଥର ଜୋରରେ କୁହନ୍ତୁ। ଅଭ୍ୟାସ ଦ୍ୱାରା ସହଜ ହୁଏ!","ସଠିକ୍ ଉଚ୍ଚାରଣ ଶୁଣିବା ପାଇଁ 🔊 ଦବାନ୍ତୁ, ତା'ପରେ ଦୁଇଥର ପୁନରାବୃତ୍ତି କରନ୍ତୁ।","ଭୁଲ ହେବା ଭଲ! ସେଗୁଡ଼ିକ ଭୁଲ ନୋଟବୁକରେ ରହେ, ଯାହା ଦ୍ୱାରା ଆପଣ ସେଗୁଡ଼ିକ ଠିକ୍ କରିପାରିବେ।","ପ୍ରତିଦିନ ୩ଟି ନୂଆ ଶବ୍ଦ ଶିଖନ୍ତୁ ଏବଂ ପ୍ରତ୍ୟେକକୁ ଏକ ବାକ୍ୟରେ ବ୍ୟବହାର କରନ୍ତୁ।","ଅନ୍ୟ ପ୍ରକାରେ ନିଜକୁ ପରୀକ୍ଷା କରିବା ପାଇଁ ଇଂରାଜୀ → ଓଡ଼ିଆ ମୋଡ୍ ଚେଷ୍ଟା କରନ୍ତୁ।","ପ୍ରତିଦିନ ୫ ମିନିଟ୍ ପାଠ ସପ୍ତାହରେ ଏକ ଲମ୍ବା ପାଠ ଅପେକ୍ଷା ଭଲ।","ଆପଣଙ୍କ ଚାରିପାଖରେ ଥିବା ଇଂରାଜୀ ସାଇନବୋର୍ଡ ଓ ଲେବଲ୍ ପଢ଼ନ୍ତୁ। ସବୁକିଛି ଅଭ୍ୟାସ!","ଆତ୍ମବିଶ୍ୱାସ ଥିଲେ ସ୍ପିଡ୍ ରାଉଣ୍ଡ ଚେଷ୍ଟା କରନ୍ତୁ। ଏହା ଦ୍ରୁତ ଚିନ୍ତା ଶିଖାଏ।"];
 setInterval(()=>{
   if(!gestured||document.hidden||robotTyping||robotSpeaking)return;
   if(!$("lesson-modal").classList.contains("hidden")||!$("sheet-modal").classList.contains("hidden"))return;
-  robotSay(rand(ROBOT_IDLE));},90000);
+  robotTalk(rand(ROBOT_IDLE));},90000);
 /* ---------------- Question generators ---------------- */
 let _pool=null;
 function poolList(){if(_pool)return _pool;const m=new Map();
@@ -231,7 +245,7 @@ function render(){
   const r=rankInfo();$("rank-emoji").textContent=r.cur.emoji;$("rank-name").textContent=r.cur.name;$("rank-bar").style.width=r.pct+"%";
   $("rank-label").textContent=r.next?`${state.xp} / ${r.next.xp} XP to ${r.next.name}`:"Top rank reached! 🎉";
   $("language-toggle").textContent="Mode: "+(state.mode==="odia-en"?"Odia → English":"English → Odia");
-  $("daily-tip").textContent=TIPS[Math.floor(Date.now()/864e5)%TIPS.length];
+  {const di=Math.floor(Date.now()/864e5)%TIPS.length;$("daily-tip").innerHTML=esc(TIPS[di])+'<span class="tip-or">'+esc(TIPS_OR[di])+'</span>';}
   // path
   const path=$("learning-path");path.innerHTML="";
   LEVELS.forEach(level=>{
@@ -472,7 +486,7 @@ function finishSession(){
   saveState();const fresh=checkBadges();const rank=rankInfo();const ranked=rank.idx>prevRank;
   if(passed){sfx(ranked?"rank":"win");confetti(perfect?150:90);}else sfx("lose");
   render();
-  robotSay(passed?rand(ROBOT_CELEBRATE):rand(ROBOT_TRY));
+  robotTalk(passed?rand(ROBOT_CELEBRATE):rand(ROBOT_TRY));
   const earned=s.xpGained+bonus;
   const next=(()=>{if(s.kind!=="lesson"||!passed)return null;const list=allLessons();const i=list.findIndex(l=>l.id===s.lesson.id);const n=list[i+1];return n&&isUnlocked(n)?n:null;})();
   $("lesson-progress-bar").style.width="100%";heartsUI();
@@ -591,7 +605,7 @@ setTimeout(showInstallBanner,6000);
 $("install-btn").addEventListener("click",async()=>{
   if(deferredInstall){const d=deferredInstall;deferredInstall=null;try{d.prompt();await d.userChoice;}catch{}updateInstallBtn();return;}
   installHelp();});
-document.querySelector(".robot-area").addEventListener("click",()=>{const r=document.querySelector(".robot");r.classList.remove("jump");void r.offsetWidth;r.classList.add("jump");robotSay("Tip: "+rand(TIPS));sfx("click");});
+document.querySelector(".robot-area").addEventListener("click",()=>{const r=document.querySelector(".robot");r.classList.remove("jump");void r.offsetWidth;r.classList.add("jump");{const i=Math.floor(Math.random()*TIPS.length);robotTalk([TIPS[i],TIPS_OR[i]]);}sfx("click");});
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){if(!$("sheet-modal").classList.contains("hidden"))closeSheet();else if(!$("lesson-modal").classList.contains("hidden"))closeLesson();return;}
   if($("lesson-modal").classList.contains("hidden")||!session||session.done)return;
@@ -610,7 +624,7 @@ lessonById("simple-sentences").sayLine={en:"I am a student.",odia:"ମୁଁ ଜ
 lessonById("questions").sayLine={en:"How are you?",odia:"ତୁମେ କେମିତି ଅଛ?"};
 lessonById("real-life").sayLine={en:"Nice to meet you.",odia:"ଆପଣଙ୍କୁ ଭେଟି ଆନନ୍ଦିତ।"};
 newDayChecks();regenHearts();saveState();applyTheme();render();updateInstallBtn();
-setTimeout(()=>robotSay(greetingLine()),800);
+setTimeout(()=>robotTalk([greetingLine(),"ନମସ୍କାର! ନୂଆ ଅଭିଯାନ ପାଇଁ ପ୍ରସ୍ତୁତ?"]),800);
 // app shortcuts from the home-screen icon (long-press) e.g. ?action=quick
 {const a=new URLSearchParams(location.search).get("action");
  if(a){setTimeout(()=>{if(a==="continue")$("continue-btn").click();else if(a==="quick")startQuick();else if(a==="cards")openFlashcards();history.replaceState(null,"",location.pathname);},400);}}

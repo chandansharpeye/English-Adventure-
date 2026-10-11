@@ -191,3 +191,7 @@ button,.chip,.unit-btn{touch-action:manipulation}
 [data-theme="dark"] .voice-chip{background:#241f45;border-color:#3a3566;color:#c3baff}
 .robot.talk{animation:bob .42s ease-in-out infinite}
 .robot.talk .eyes i{animation:none}
+.rt-en{display:block}
+.rt-or{display:block;margin-top:5px;font-family:"Noto Sans Oriya",Nunito,sans-serif;font-size:13px;color:#5b4fd0}
+.tip-or{display:block;margin-top:6px;font-family:"Noto Sans Oriya",Nunito,sans-serif;font-size:13px;color:#5b4fd0;font-weight:700}
+[data-theme="dark"] .rt-or,[data-theme="dark"] .tip-or{color:#b5a9ff}
