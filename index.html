@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6558e8">
+  <meta name="description" content="English Adventure: learn English with Odia meanings, games, and a friendly robot teacher.">
+  <title>English Adventure — Learn English by Playing</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="English Adventure home">
+      <span class="brand-mark">EA</span><span>English <b>Adventure</b></span>
+    </a>
+    <div class="top-stats">
+      <span title="Experience points">⭐ <b id="top-xp">0</b></span>
+      <span title="Hearts remaining">❤️ <b id="top-hearts">5</b></span>
+      <span title="Daily streak">🔥 <b id="top-streak">0</b></span>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero panel">
+      <div class="hero-copy">
+        <p class="eyebrow">YOUR NEXT CHAPTER STARTS HERE</p>
+        <h1>Learn English.<br><span>Play your way.</span></h1>
+        <p class="hero-description">Small lessons. Big progress. Learn from Odia to English or English to Odia, one fun challenge at a time.</p>
+        <div class="hero-actions">
+          <button class="primary-btn" id="continue-btn">Continue learning <span>→</span></button>
+          <button class="secondary-btn" id="language-toggle">Mode: Odia → English</button>
+        </div>
+      </div>
+      <div class="robot-area" aria-label="Friendly robot teacher">
+        <div class="robot-glow"></div>
+        <div class="robot" aria-hidden="true">
+          <div class="antenna"><i></i></div>
+          <div class="robot-head">
+            <div class="robot-ear left"></div><div class="robot-ear right"></div>
+            <div class="robot-face">
+              <div class="eyes"><i></i><i></i></div>
+              <div class="smile"></div>
+            </div>
+          </div>
+          <div class="robot-neck"></div>
+          <div class="robot-body"><span>EA</span><i class="chest-light"></i></div>
+          <div class="robot-arm left"></div><div class="robot-arm right"></div>
+        </div>
+        <div class="speech-bubble" id="robot-message">Namaskar! Ready for a new adventure?</div>
+        <span class="spark spark-one">✦</span><span class="spark spark-two">✧</span>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <section class="panel path-panel">
+        <div class="section-heading">
+          <div><p class="eyebrow">YOUR LEARNING MAP</p><h2>Choose your path</h2></div>
+          <span class="tiny-pill" id="completed-count">0 lessons completed</span>
+        </div>
+        <div id="learning-path" class="learning-path"></div>
+      </section>
+
+      <aside class="side-column">
+        <section class="panel daily-panel">
+          <div class="section-heading"><div><p class="eyebrow">YOUR DAILY QUEST</p><h2>Keep it going!</h2></div><span class="quest-icon">⚡</span></div>
+          <p class="muted">Complete one lesson today to build your learning habit.</p>
+          <div class="quest-progress"><div id="quest-bar"></div></div>
+          <div class="quest-footer"><span id="quest-label">0 / 1 lesson today</span><b>+10 XP</b></div>
+        </section>
+        <section class="panel stats-panel">
+          <p class="eyebrow">YOUR PROGRESS</p>
+          <div class="stat-row"><span class="stat-icon purple">⭐</span><span class="stat-name">Total XP</span><b id="stat-xp">0</b></div>
+          <div class="stat-row"><span class="stat-icon orange">🔥</span><span class="stat-name">Day streak</span><b id="stat-streak">0</b></div>
+          <div class="stat-row"><span class="stat-icon green">🏆</span><span class="stat-name">Lessons done</span><b id="stat-lessons">0</b></div>
+          <div class="stat-row"><span class="stat-icon blue">🎯</span><span class="stat-name">Best accuracy</span><b id="stat-accuracy">—</b></div>
+        </section>
+        <section class="panel tip-panel">
+          <span class="tip-icon">💡</span><div><b>Robot's tip</b><p id="daily-tip">Say each new English word aloud. Practice makes it easier!</p></div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="panel word-of-day">
+      <div class="word-icon">Aa</div><div class="word-content"><p class="eyebrow">WORD OF THE DAY</p><h2 id="word-en">Brave</h2><p id="word-odia">ସାହସୀ</p><p class="muted" id="word-example">Example: The brave student tried again.</p></div>
+      <button class="round-btn" id="new-word" aria-label="Show another word">↻</button>
+    </section>
+    <footer><span>English Adventure · Learn a little every day.</span><span>Made for learners everywhere 🌍</span></footer>
+  </main>
+
+  <div class="modal-backdrop hidden" id="lesson-modal" role="dialog" aria-modal="true" aria-labelledby="lesson-title">
+    <div class="lesson-modal">
+      <div class="lesson-top"><button class="icon-btn" id="close-lesson" aria-label="Close lesson">✕</button><div class="lesson-progress"><div id="lesson-progress-bar"></div></div><span class="hearts-label">❤️ <b id="lesson-hearts">5</b></span></div>
+      <div id="lesson-screen"></div>
+    </div>
+  </div>
+  <div class="toast hidden" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
