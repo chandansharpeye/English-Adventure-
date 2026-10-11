@@ -1,8 +1,8 @@
 const CACHE_NAME = "english-adventure-v4";
 const APP_FILES = [
   "./", "./index.html", "./offline.html", "./styles.css", "./audio.js", "./data.js", "./app.js", "./manifest.json",
-  "./assets/icon.svg", "./assets/icon-192.png", "./assets/icon-512.png", "./assets/icon-maskable-192.png",
-  "./assets/icon-maskable-512.png", "./assets/apple-touch-icon.png", "./assets/favicon-32.png"
+  "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-maskable-192.png",
+  "./icon-maskable-512.png", "./apple-touch-icon.png", "./favicon-32.png"
 ];
 // Cache every file on its own so one missing file can never stop the app from installing.
 self.addEventListener("install", event => {
