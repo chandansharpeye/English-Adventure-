@@ -20,10 +20,11 @@ function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replac
 /* ---------------- State ---------------- */
 const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
   wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
-  srs:{},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
+  srs:{},profile:{name:"",age:"",source:"",reason:"",tourDone:false},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
 function sanitize(m){const f=freshState();
   ["completed","activeDays","mistakes","wordsSeen","badges"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
   if(!m.srs||typeof m.srs!=="object")m.srs={};
+  m.profile={...f.profile,...(m.profile&&typeof m.profile==="object"?m.profile:{})};
   ["xp","hearts","streak","dailyCompleted","bestAccuracy","totalAnswered","totalCorrect","wordIndex","dailyGoal","heartTime","perfectCount","bestCombo","speedBest","mistakesFixed"].forEach(k=>{if(typeof m[k]!=="number"||!isFinite(m[k]))m[k]=f[k];});
   m.hearts=Math.max(0,Math.min(5,m.hearts));m.dailyGoal=[1,2,3].includes(m.dailyGoal)?m.dailyGoal:1;
   if(m.mode!=="odia-en"&&m.mode!=="en-odia")m.mode="odia-en";
@@ -281,7 +282,7 @@ function render(){
 
 /* ---------------- Sessions ---------------- */
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
-function syncModalLock(){document.body.classList.toggle("modal-open",!$("lesson-modal").classList.contains("hidden")||!$("sheet-modal").classList.contains("hidden"));}
+function syncModalLock(){document.body.classList.toggle("modal-open",!$("lesson-modal").classList.contains("hidden")||!$("sheet-modal").classList.contains("hidden")||!$("tour").classList.contains("hidden"));}
 function startLesson(level,lesson){
   if(!isUnlocked(lesson)){showToast("Finish the previous lesson to unlock this one.");return;}
   if(state.mode==="en-odia"&&!lesson.pairs)showToast("Grammar lessons stay the same in this mode.");
@@ -548,6 +549,7 @@ function openSettings(){
     <p class="eyebrow settings-label">ROBOT LANGUAGE</p><div class="chips" id="robot-lang-chips">${[["en","English"],["or","ଓଡ଼ିଆ"],["hi","हिंदी"]].map(([v,l])=>`<button class="chip${robotLangNow()===v?" active":""}" data-rl="${v}">${l}</button>`).join("")}</div>
     ${isStandalone()?"":'<p class="eyebrow settings-label">APP</p><button class="secondary-btn" id="set-install">📲 Install app</button>'}
     <p class="eyebrow settings-label">THEME</p><div class="chips" id="theme-chips">${[["auto","Auto"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<button class="chip${state.settings.theme===v?" active":""}" data-theme="${v}">${l}</button>`).join("")}</div>
+    <p class="eyebrow settings-label">WELCOME TOUR</p><button class="secondary-btn" id="replay-tour">🎓 Replay welcome tour</button>
     <p class="eyebrow settings-label">BACKUP & TRANSFER</p><p class="muted">Copy this code to keep your progress safe or move it to another device. Paste a code and tap Restore to load it.</p>
     <textarea id="backup-code" class="backup" rows="3" spellcheck="false" aria-label="Backup code">${esc(b64e(JSON.stringify(state)))}</textarea>
     <div class="result-actions left"><button class="secondary-btn" id="copy-backup">Copy code</button><button class="secondary-btn" id="restore-backup">Restore from code</button></div>
@@ -557,6 +559,7 @@ function openSettings(){
   const si=$("set-install");if(si)si.addEventListener("click",()=>$("install-btn").click());
   $("set-robot").addEventListener("change",e=>{state.settings.robotVoice=e.target.checked;saveState();if(!e.target.checked)speechSynthesis.cancel();});
   document.querySelectorAll("#robot-lang-chips .chip").forEach(c=>c.addEventListener("click",()=>setRobotLang(c.dataset.rl)));
+  $("replay-tour").addEventListener("click",replayTour);
   $("set-music").addEventListener("change",e=>{state.settings.music=e.target.checked;gestured=true;saveState();applyMusic();});
   $("set-mvol").addEventListener("input",e=>{state.settings.musicVol=e.target.value/100;gestured=true;if(state.settings.music)applyMusic();});
   $("set-mvol").addEventListener("change",saveState);
@@ -585,6 +588,53 @@ $("sound-btn").addEventListener("click",()=>{state.settings.sound=!state.setting
 $("theme-btn").addEventListener("click",()=>{const dark=document.documentElement.dataset.theme==="dark";state.settings.theme=dark?"light":"dark";saveState();applyTheme();});
 $("music-btn").addEventListener("click",()=>{state.settings.music=!state.settings.music;gestured=true;saveState();applyMusic();showToast(state.settings.music?"Music on 🎵":"Music off");});
 $("settings-btn").addEventListener("click",openSettings);
+
+/* ---------------- Welcome tour (C-BOT) ---------------- */
+const TOUR_STEPS=[
+ {kind:"info",line:["Welcome to O-E Adventure","O-E Adventure କୁ ସ୍ୱାଗତ!","O-E Adventure में आपका स्वागत है!"]},
+ {kind:"name",key:"name",line:["What is your name?","ଆପଣଙ୍କ ନାମ କ'ଣ?","आपका नाम क्या है?"]},
+ {kind:"age",key:"age",line:["How old are you{n}?","ଆପଣଙ୍କ ବୟସ କେତେ{n}?","आपकी उम्र कितनी है{n}?"]},
+ {kind:"chips",key:"source",line:["How did you know about us?","ଆପଣ ଆମ ବିଷୟରେ କେମିତି ଜାଣିଲେ?","आप हमारे बारे में कैसे जाने?"],opts:[["Friend","ବନ୍ଧୁ","दोस्त"],["School","ସ୍କୁଲ୍","स्कूल"],["Social media","ସୋସିଆଲ୍ ମିଡ଼ିଆ","सोशल मीडिया"],["Other","ଅନ୍ୟ","अन्य"]]},
+ {kind:"chips",key:"reason",line:["Why do you want to learn English?","ଆପଣ ଇଂରାଜୀ କାହିଁକି ଶିଖିବାକୁ ଚାହୁଁଛନ୍ତି?","आप अंग्रेज़ी क्यों सीखना चाहते हैं?"],opts:[["Work","କାମ","काम"],["Study","ପଢ଼ା","पढ़ाई"],["Travel","ଭ୍ରମଣ","यात्रा"],["Confidence","ଆତ୍ମବିଶ୍ୱାସ","आत्मविश्वास"],["Fun","ମଜା","मज़ा"]]},
+ {kind:"info",line:["I am C-BOT, a robot made with technology by Chandan. My real master is Chandan.","ମୁଁ C-BOT, ଚନ୍ଦନଙ୍କ ଦ୍ୱାରା ଟେକ୍ନୋଲୋଜି ସହ ତିଆରି ଏକ ରୋବଟ୍। ମୋର ଅସଲ ମାଲିକ ଚନ୍ଦନ।","मैं C-BOT हूँ, चंदन द्वारा तकनीक से बना एक रोबोट। मेरे असली मालिक चंदन हैं।"]},
+ {kind:"info",last:true,line:["Let's start the game!","ଚାଲନ୍ତୁ ଖେଳ ଆରମ୍ଭ କରିବା!","चलिए खेल शुरू करते हैं!"]}
+];
+let tourIdx=0;
+const tourNameTag=()=>state.profile.name?", "+state.profile.name:"";
+function tourLine(st,i){return st.line[i].replace("{n}",tourNameTag());}
+function openTour(){tourIdx=0;$("tour").classList.remove("hidden");syncModalLock();showTourStep();}
+function closeTour(done){
+  $("tour").classList.add("hidden");syncModalLock();
+  try{speechSynthesis.cancel();}catch{}
+  if(done){state.profile.tourDone=true;saveState();}
+  render();
+  if(done){robotTalk([`Hi${tourNameTag()}! Let's play and learn together.`,`ନମସ୍କାର${tourNameTag()}! ଆସନ୍ତୁ ଏକାଠି ଶିଖିବା।`,`नमस्ते${tourNameTag()}! चलिए मिलकर सीखते हैं।`]);}
+}
+function showTourStep(){
+  const st=TOUR_STEPS[tourIdx],lang=robotLangNow(),li={en:0,or:1,hi:2}[lang];
+  $("tour-progress").textContent=`${tourIdx+1} / ${TOUR_STEPS.length}`;
+  $("tour-en").textContent=tourLine(st,0);$("tour-or").textContent=tourLine(st,1);
+  const box=$("tour-inputs");box.innerHTML="";
+  if(st.kind==="name")box.innerHTML=`<input id="tour-text-in" class="type-input" placeholder="Your name · ଆପଣଙ୍କ ନାମ · आपका नाम" maxlength="30" value="${esc(state.profile.name)}" aria-label="Your name">`;
+  if(st.kind==="age")box.innerHTML=`<input id="tour-text-in" class="type-input" type="number" inputmode="numeric" min="3" max="100" placeholder="e.g. 12" value="${esc(state.profile.age)}" aria-label="Your age">`;
+  if(st.kind==="chips"){
+    box.innerHTML=`<div class="chips tour-chips">${st.opts.map(o=>`<button class="chip${state.profile[st.key]===o[0]?" active":""}" data-v="${esc(o[0])}">${esc(o[0])}<small>${esc(o[1])} · ${esc(o[2])}</small></button>`).join("")}</div>`;
+    box.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{state.profile[st.key]=c.dataset.v;box.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===c));sfx("click");}));}
+  $("tour-next").textContent=st.last?"Start the game →":"Next →";
+  typeText($("tour-bubble"),tourLine(st,li),22);
+  speakRobot(tourLine(st,li),ROBOT_LANGS[lang].tag);
+  const inp=$("tour-text-in");if(inp&&!inp.value)setTimeout(()=>{try{inp.focus();}catch{}},150);
+}
+$("tour-next").addEventListener("click",()=>{
+  const st=TOUR_STEPS[tourIdx];
+  if(st.kind==="name"){state.profile.name=(($("tour-text-in")||{}).value||"").trim().slice(0,30);}
+  if(st.kind==="age"){const n=parseInt(($("tour-text-in")||{}).value,10);state.profile.age=n>=3&&n<=100?String(n):"";}
+  if(st.kind==="chips"&&!state.profile[st.key]){showToast("Please choose one option.");return;}
+  saveState();
+  if(st.last){closeTour(true);return;}
+  tourIdx++;showTourStep();});
+$("tour-skip").addEventListener("click",()=>closeTour(true));
+function replayTour(){closeSheet();openTour();}
 function updateRobotLangBtn(){const b=$("robot-lang-btn");if(b)b.textContent="🤖 Robot: "+ROBOT_LANGS[robotLangNow()].label;}
 function setRobotLang(v){if(!ROBOT_LANGS[v])return;state.settings.robotLang=v;saveState();updateRobotLangBtn();
   document.querySelectorAll("#robot-lang-chips .chip").forEach(c=>c.classList.toggle("active",c.dataset.rl===v));
@@ -645,7 +695,8 @@ lessonById("simple-sentences").sayLine={en:"I am a student.",odia:"ମୁଁ ଜ
 lessonById("questions").sayLine={en:"How are you?",odia:"ତୁମେ କେମିତି ଅଛ?"};
 lessonById("real-life").sayLine={en:"Nice to meet you.",odia:"ଆପଣଙ୍କୁ ଭେଟି ଆନନ୍ଦିତ।"};
 newDayChecks();regenHearts();saveState();applyTheme();render();updateInstallBtn();updateRobotLangBtn();
-setTimeout(()=>robotTalk([greetingLine(),"ନମସ୍କାର! ନୂଆ ଅଭିଯାନ ପାଇଁ ପ୍ରସ୍ତୁତ?","नमस्ते! नई यात्रा के लिए तैयार हैं?"]),800);
+if(state.profile.tourDone)setTimeout(()=>robotTalk([greetingLine(),"ନମସ୍କାର! ନୂଆ ଅଭିଯାନ ପାଇଁ ପ୍ରସ୍ତୁତ?","नमस्ते! नई यात्रा के लिए तैयार हैं?"]),800);
+else setTimeout(openTour,500);
 // app shortcuts from the home-screen icon (long-press) e.g. ?action=quick
 {const a=new URLSearchParams(location.search).get("action");
  if(a){setTimeout(()=>{if(a==="continue")$("continue-btn").click();else if(a==="quick")startQuick();else if(a==="cards")openFlashcards();history.replaceState(null,"",location.pathname);},400);}}

@@ -195,3 +195,25 @@ button,.chip,.unit-btn{touch-action:manipulation}
 .rt-or{display:block;margin-top:5px;font-family:"Noto Sans Oriya",Nunito,sans-serif;font-size:13px;color:#5b4fd0}
 .tip-or{display:block;margin-top:6px;font-family:"Noto Sans Oriya",Nunito,sans-serif;font-size:13px;color:#5b4fd0;font-weight:700}
 [data-theme="dark"] .rt-or,[data-theme="dark"] .tip-or{color:#b5a9ff}
+
+/* ---- welcome tour (C-BOT) ---- */
+.tour{position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:16px;background:rgba(27,24,56,.55);backdrop-filter:blur(3px)}
+.tour.hidden{display:none}
+.tour-card{width:100%;max-width:420px;background:#fff;border-radius:26px;padding:20px 20px 22px;box-shadow:0 24px 60px rgba(30,20,90,.3);animation:tourIn .35s ease}
+@keyframes tourIn{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.tour-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tour-bot{display:flex;align-items:center;gap:10px}
+.tour-face{display:grid;place-items:center;width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#7769f5,#5547d1);font-size:24px;animation:bob 2.6s ease-in-out infinite}
+.tour-bot b{font-size:16px;letter-spacing:.5px}
+.tour-bubble{min-height:84px;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#f1efff,#fff);border:1px solid #e4e1fb;font-size:17px;font-weight:900;line-height:1.45;color:var(--ink)}
+.tour-sub{margin:10px 2px 0;font-size:13px;font-weight:800;color:var(--muted)}
+.tour-or{font-family:"Noto Sans Oriya",Nunito,sans-serif;color:#5b4fd0;margin-top:4px}
+#tour-inputs{margin-top:14px}
+#tour-inputs .type-input{max-width:none}
+.tour-chips{justify-content:flex-start}
+.tour-chips .chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 13px;border-radius:14px;text-align:left}
+.tour-chips .chip small{font-size:10px;font-weight:700;opacity:.8}
+.tour-actions{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.tour-actions .primary-btn{flex:1}
+[data-theme="dark"] .tour-card{background:#1c1936}
+[data-theme="dark"] .tour-bubble{background:linear-gradient(135deg,#26224a,#1c1936);border-color:#3a3566}
