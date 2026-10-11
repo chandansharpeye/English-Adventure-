@@ -20,7 +20,7 @@ function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replac
 /* ---------------- State ---------------- */
 const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
   wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
-  srs:{},settings:{sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
+  srs:{},settings:{robotVoice:true,sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
 function sanitize(m){const f=freshState();
   ["completed","activeDays","mistakes","wordsSeen","badges"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
   if(!m.srs||typeof m.srs!=="object")m.srs={};
@@ -67,7 +67,7 @@ function rankInfo(){let idx=0;RANKS.forEach((r,i)=>{if(state.xp>=r.xp)idx=i;});c
   return {idx,cur,next,pct:next?Math.round((state.xp-cur.xp)/(next.xp-cur.xp)*100):100};}
 function checkBadges(){const fresh=[];
   BADGES.forEach(b=>{if(!state.badges.includes(b.id)&&b.test(state)){state.badges.push(b.id);fresh.push(b);}});
-  if(fresh.length){saveState();sfx("badge");confetti(70);showToast("🏅 Badge unlocked: "+fresh.map(b=>b.name).join(", "));}
+  if(fresh.length){saveState();sfx("badge");confetti(70);showToast("🏅 Badge unlocked: "+fresh.map(b=>b.name).join(", "));robotSay("Wow! You unlocked a new badge!");}
   return fresh;}
 
 /* ---------------- Sound & voice ---------------- */
@@ -92,7 +92,7 @@ let gestured=false;
 function applyMusic(){
   if(gestured&&state.settings.music&&!document.hidden){AudioKit.setVolume(state.settings.musicVol);AudioKit.start();}else AudioKit.stop();
   renderTopStats();}
-const unlockAudio=()=>{gestured=true;applyMusic();["pointerdown","keydown","touchstart"].forEach(e=>removeEventListener(e,unlockAudio));};
+const unlockAudio=()=>{gestured=true;applyMusic();if(robotPending){const t=robotPending;robotPending=null;speakRobot(t);}["pointerdown","keydown","touchstart"].forEach(e=>removeEventListener(e,unlockAudio));};
 ["pointerdown","keydown","touchstart"].forEach(e=>addEventListener(e,unlockAudio,{passive:true}));
 function confetti(n){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
@@ -127,6 +127,35 @@ function nextReviewDays(){const dues=state.mistakes.map(m=>(state.srs[srsKey(m)]
 /* ---------------- Say items ---------------- */
 function sayItem(p){return {type:"say",prompt:`Say "${p.en}" aloud`,hint:"Pronunciation practice",answer:p.en,explanation:`${p.en} = ${p.odia}.`,say:p.en};}
 function sayLineItem(t){return {type:"say",prompt:`Say "${t.en}" aloud`,hint:"Say the whole sentence clearly",answer:t.en,explanation:`${t.en} = ${t.odia}`,say:t.en,threshold:.72};}
+/* ---------------- Talking robot ---------------- */
+let robotPending=null,robotSpeaking=false,robotTyping=false;
+const robotEl=()=>document.querySelector(".robot");
+function setTalk(){const b=robotEl();if(b)b.classList.toggle("talk",robotSpeaking||robotTyping);}
+function typeText(el,text,speed,done){
+  if(!el)return;clearInterval(el._t);el.classList.add("typing");el.textContent="";let i=0;
+  el._t=setInterval(()=>{el.textContent=text.slice(0,++i);if(i>=text.length){clearInterval(el._t);el.classList.remove("typing");if(done)done();}},speed||26);}
+function speakRobot(text){
+  if(!state.settings.robotVoice||!canSpeak())return;
+  if(!gestured){robotPending=text;return;}            // browsers block voice until the first tap
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);u.lang="en-IN";u.rate=1;u.pitch=1.4;
+    const vs=speechSynthesis.getVoices();const v=vs.find(x=>x.lang==="en-IN")||vs.find(x=>/^en/i.test(x.lang));if(v)u.voice=v;
+    u.onstart=()=>{robotSpeaking=true;setTalk();AudioKit.duck(true);};
+    u.onend=u.onerror=()=>{robotSpeaking=false;setTalk();AudioKit.duck(false);};
+    speechSynthesis.speak(u);
+  }catch{}}
+function robotSay(text,opts){
+  robotTyping=true;setTalk();
+  typeText($("robot-message"),text,24,()=>{robotTyping=false;setTalk();});
+  if(!opts||opts.speak!==false)speakRobot(text);}
+const ROBOT_IDLE=["Ready for a new word today?","Tap the mic and say a word. Let's practise speaking!","Try a Speed Round. Can you beat your score?","Little practice every day goes a long way.","Tap the flashcards and learn three new words.","Your streak is growing. Keep it up!"];
+const ROBOT_CELEBRATE=["Wonderful! You finished the lesson!","Amazing work! Keep going, champion!","Super job! You are getting better every day!"];
+const ROBOT_TRY=["Good try! Let's practise this one again.","Almost there! You will get it next time."];
+setInterval(()=>{
+  if(!gestured||document.hidden||robotTyping||robotSpeaking)return;
+  if(!$("lesson-modal").classList.contains("hidden")||!$("sheet-modal").classList.contains("hidden"))return;
+  robotSay(rand(ROBOT_IDLE));},90000);
 /* ---------------- Question generators ---------------- */
 let _pool=null;
 function poolList(){if(_pool)return _pool;const m=new Map();
@@ -220,7 +249,6 @@ function render(){
   $("badge-grid").innerHTML=BADGES.map(b=>{const on=state.badges.includes(b.id);return `<div class="badge${on?" on":""}" title="${esc(b.desc)}"><span class="badge-icon">${on?b.icon:"🔒"}</span><b>${esc(b.name)}</b><small>${esc(b.desc)}</small></div>`;}).join("");
   // word of the day
   const w=WORDS[state.wordIndex%WORDS.length];$("word-en").textContent=w.en;$("word-odia").textContent=w.odia;$("word-example").textContent="Example: "+w.example;
-  $("robot-message").textContent=greetingLine();
 }
 
 /* ---------------- Sessions ---------------- */
@@ -252,11 +280,13 @@ function renderQuestion(){
   const retry=item._retry,pre=previewText(item);
   const speakBtn=item.type==="listen"?`<div class="listen-row"><button class="speak-btn big" id="speak-q" aria-label="Play audio">🔊</button><button class="speak-btn" id="speak-slow" aria-label="Play slowly">🐢</button></div>`:pre?`<div class="listen-row"><button class="speak-btn" id="speak-q" aria-label="Hear it">🔊 Normal</button><button class="speak-btn" id="speak-slow2" aria-label="Play slowly">🐢 Slow</button></div>`:"";
   $("lesson-screen").innerHTML=`<div class="lesson-content"><p class="lesson-kicker">${esc(s.kicker)} · ${retry?"REVIEW":"QUESTION "+(s.idx+1)+"/"+s.queue.length}</p><h2>${esc(s.title)}</h2>
-    <p class="coach"><span class="coach-bot">🤖</span><span id="coach-line">${esc(retry?"Let's try this one again!":coach())}</span></p>
+    <p class="coach"><span class="coach-bot">🤖</span><span id="coach-line"></span></p>
     ${s.timed?`<div class="timer"><i id="timer-bar"></i></div>`:""}
     <div class="question-card"><div class="question-emoji">${s.icon}</div><p class="question-prompt">${esc(item.prompt)}</p><p class="question-hint">${esc(item.hint||"")}</p>${speakBtn}</div>
     <p class="lesson-instruction">${INSTR[item.type]||INSTR.mcq}</p><div class="answer-area" id="answer-area"></div><div id="feedback" aria-live="polite"></div>
-    <div class="lesson-bottom"><span class="combo" id="combo-pill">${s.combo>=2?"🔥 Combo ×"+s.combo:"Correct answer earns XP ⭐"}</span><button class="primary-btn" id="check-btn" disabled>${item.type==="match"?"Match all pairs":"Check answer"}</button></div></div>`;
+    <div class="lesson-bottom"><span class="combo" id="combo-pill">${s.combo>=2?"🔥 Combo ×"+s.combo:"Correct answer earns XP ⭐"}</span>${SR_CLASS&&item.type!=="say"?`<button class="voice-chip" id="voice-btn" aria-label="Speak your answer">${item.type==="match"?"🎤 Say a word":"🎤 Speak"}</button>`:""}<button class="primary-btn" id="check-btn" disabled>${item.type==="match"?"Match all pairs":"Check answer"}</button></div></div>`;
+  typeText($("coach-line"),retry?"Let's try this one again!":coach(),22);
+  const vb0=$("voice-btn");if(vb0)vb0.addEventListener("click",()=>voiceSolve(item));
   const sq=$("speak-q");if(sq)sq.addEventListener("click",()=>speak(pre||item.say));const ss=$("speak-slow");if(ss)ss.addEventListener("click",()=>speak(item.say,.5));const s2=$("speak-slow2");if(s2)s2.addEventListener("click",()=>speak(pre,.5));
   if(item.type==="listen"&&state.settings.autoRead)setTimeout(()=>{if(session===s&&s.item===item&&!s.answered)speak(item.say);},350);
   $("check-btn").addEventListener("click",onPrimary);
@@ -285,6 +315,47 @@ function drawArrange(){const s=session,zone=$("arr-zone"),bank=$("arr-bank");if(
   s.arranged.forEach(id=>{const b=tile(id);b.addEventListener("click",()=>{if(s.answered)return;s.arranged=s.arranged.filter(x=>x!==id);sfx("click");drawArrange();});zone.appendChild(b);});
   s.bank.forEach(id=>{const b=tile(id);if(s.arranged.includes(id)){b.classList.add("used");b.disabled=true;}else b.addEventListener("click",()=>{if(s.answered)return;s.arranged.push(id);sfx("click");drawArrange();});bank.appendChild(b);});
   if(!s.answered)$("check-btn").disabled=!s.arranged.length;}
+/* ---------------- Speak your answer on any question ---------------- */
+const NUM_WORDS={one:0,first:0,"1":0,two:1,second:1,"2":1,three:2,third:2,"3":2,four:3,fourth:3,"4":3};
+function bestOptionIndex(alts,options){
+  let best=-1,bs=0;
+  alts.forEach(a=>{const t=norm(a);
+    const m=t.match(/\b(?:option\s+)?(one|two|three|four|first|second|third|fourth|1|2|3|4)\b/);
+    if(m&&t.split(" ").length<=3&&NUM_WORDS[m[1]]<options.length&&bs<1){bs=1;best=NUM_WORDS[m[1]];}
+    options.forEach((o,i)=>{const sc=similarity(a,o);if(sc>bs&&sc>=.7){bs=sc;best=i;}});});
+  return best;}
+function voiceErrorText(err){
+  return ({"not-allowed":"Microphone is blocked. Allow it in browser settings.","service-not-allowed":"Microphone is blocked. Allow it in browser settings.","audio-capture":"No microphone found.","network":"Voice needs internet. Check your connection.","no-speech":"I could not hear you. Try again."})[err.message]||"Could not hear that clearly. Try again.";}
+async function voiceSolve(item){
+  const s=session;if(!s||s.answered||s.listening||item.type==="say")return;
+  s.listening=true;const vb=$("voice-btn");if(vb){vb.disabled=true;vb.textContent="🎙️ Listening…";}
+  const status=t=>typeText($("coach-line"),t,18);
+  const reset=()=>{s.listening=false;if(vb&&!s.answered){vb.disabled=false;vb.textContent="🎤 Speak";}};
+  try{
+    const alts=await listenOnce();
+    if(session!==s||s.answered){s.listening=false;return;}
+    s.listening=false;const heard=alts[0];
+    if(item.type==="mcq"||item.type==="listen"){
+      const btns=[...document.querySelectorAll(".answer-option")];
+      const idx=bestOptionIndex(alts,btns.map(b=>b.dataset.value));
+      if(idx<0)status("Didn't catch that. Say the option or tap one.");
+      else{btns[idx].click();status(`You said “${heard}”`);setTimeout(()=>{if(session===s&&!s.answered&&s.selected!=null)onPrimary();},450);}
+    }else if(item.type==="type"){
+      const best=alts.find(a=>similarity(a,item.answer)>=.8)||heard;
+      const inp=$("type-input");if(inp){inp.value=best;inp.dispatchEvent(new Event("input"));}
+      resolve(similarity(best,item.answer)>=.8,item.answer,best);
+    }else if(item.type==="arrange"){
+      const score=Math.max(...alts.map(a=>similarity(a,item.answer)));
+      resolve(score>=.8,item.answer,heard);
+    }else if(item.type==="match"){
+      const tiles=[...document.querySelectorAll(".match-tile:not(.matched)")];let best=null,bs=0;
+      alts.forEach(a=>tiles.forEach(t=>{const sc=similarity(a,t.textContent);if(sc>bs){bs=sc;best=t;}}));
+      if(!best||bs<.75)status("Say a word from the English side, for example Water.");
+      else{status(`Matched “${best.textContent}”`);best.click();}
+    }
+  }catch(err){status(voiceErrorText(err));}
+  finally{reset();}
+}
 function buildSay(item){
   const a=$("answer-area");
   const model=`<div class="listen-row"><button class="speak-btn" id="say-model">🔊 Listen first</button><button class="speak-btn" id="say-model-slow">🐢 Slow</button></div>`;
@@ -343,7 +414,7 @@ function resolve(correct,correctText,userAnswer,opts){
   opts=opts||{};const s=session;if(!s||s.answered)return;const item=s.item;s.answered=true;stopTimer();
   const retry=!!item._retry;let gain=0;
   if(!retry)srsRecord(item,correct);
-  {const mb=$("mic-btn");if(mb)mb.disabled=true;}
+  {const mb=$("mic-btn");if(mb)mb.disabled=true;const vb2=$("voice-btn");if(vb2)vb2.disabled=true;}
   if(!retry)state.totalAnswered++;
   if(correct){sfx("correct");
     if(!retry){s.correct++;state.totalCorrect++;s.combo++;s.bestCombo=Math.max(s.bestCombo,s.combo);state.bestCombo=Math.max(state.bestCombo,s.combo);
@@ -365,7 +436,7 @@ function resolve(correct,correctText,userAnswer,opts){
   fb.innerHTML=`<b>${esc(head)}</b> ${showAns?"Correct answer: <b>"+esc(correctText)+"</b>. ":""}${esc(item.explanation||"")}${esc(again)} ${speakText?'<button class="speak-btn small" id="speak-fb">🔊 Hear it</button>':""}`;
   const sf=$("speak-fb");if(sf)sf.addEventListener("click",()=>speak(speakText));
   if(speakText&&state.settings.autoRead&&state.settings.sound)setTimeout(()=>speak(speakText),250);
-  $("coach-line").textContent=correct?coach("good"):coach("bad");
+  typeText($("coach-line"),correct?coach("good"):coach("bad"),20);
   $("combo-pill").textContent=s.combo>=2?"🔥 Combo ×"+s.combo:s.kind==="lesson"?"Keep going!":"";
   const last=s.idx>=s.queue.length-1;const cb=$("check-btn");cb.disabled=false;cb.textContent=last?"Finish →":"Continue →";cb.focus();
   heartsUI();saveState();renderTopStats();}
@@ -401,6 +472,7 @@ function finishSession(){
   saveState();const fresh=checkBadges();const rank=rankInfo();const ranked=rank.idx>prevRank;
   if(passed){sfx(ranked?"rank":"win");confetti(perfect?150:90);}else sfx("lose");
   render();
+  robotSay(passed?rand(ROBOT_CELEBRATE):rand(ROBOT_TRY));
   const earned=s.xpGained+bonus;
   const next=(()=>{if(s.kind!=="lesson"||!passed)return null;const list=allLessons();const i=list.findIndex(l=>l.id===s.lesson.id);const n=list[i+1];return n&&isUnlocked(n)?n:null;})();
   $("lesson-progress-bar").style.width="100%";heartsUI();
@@ -444,6 +516,7 @@ function openSettings(){
     ${sw("set-sound","Sound effects",state.settings.sound)}
     <label class="slider-row"><span>Effects volume</span><input type="range" id="set-svol" min="0" max="100" value="${Math.round(state.settings.sfxVol*100)}"></label>
     ${sw("set-read","Read answers aloud",state.settings.autoRead)}
+    ${sw("set-robot","Robot talks out loud",state.settings.robotVoice)}
     ${isStandalone()?"":'<p class="eyebrow settings-label">APP</p><button class="secondary-btn" id="set-install">📲 Install app</button>'}
     <p class="eyebrow settings-label">THEME</p><div class="chips" id="theme-chips">${[["auto","Auto"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<button class="chip${state.settings.theme===v?" active":""}" data-theme="${v}">${l}</button>`).join("")}</div>
     <p class="eyebrow settings-label">BACKUP & TRANSFER</p><p class="muted">Copy this code to keep your progress safe or move it to another device. Paste a code and tap Restore to load it.</p>
@@ -453,6 +526,7 @@ function openSettings(){
   $("set-sound").addEventListener("change",e=>{state.settings.sound=e.target.checked;saveState();renderTopStats();if(e.target.checked)sfx("correct");});
   $("set-read").addEventListener("change",e=>{state.settings.autoRead=e.target.checked;saveState();});
   const si=$("set-install");if(si)si.addEventListener("click",()=>$("install-btn").click());
+  $("set-robot").addEventListener("change",e=>{state.settings.robotVoice=e.target.checked;saveState();if(!e.target.checked)speechSynthesis.cancel();});
   $("set-music").addEventListener("change",e=>{state.settings.music=e.target.checked;gestured=true;saveState();applyMusic();});
   $("set-mvol").addEventListener("input",e=>{state.settings.musicVol=e.target.value/100;gestured=true;if(state.settings.music)applyMusic();});
   $("set-mvol").addEventListener("change",saveState);
@@ -517,7 +591,7 @@ setTimeout(showInstallBanner,6000);
 $("install-btn").addEventListener("click",async()=>{
   if(deferredInstall){const d=deferredInstall;deferredInstall=null;try{d.prompt();await d.userChoice;}catch{}updateInstallBtn();return;}
   installHelp();});
-document.querySelector(".robot-area").addEventListener("click",()=>{const r=document.querySelector(".robot");r.classList.remove("jump");void r.offsetWidth;r.classList.add("jump");$("robot-message").textContent="💡 "+rand(TIPS);sfx("click");});
+document.querySelector(".robot-area").addEventListener("click",()=>{const r=document.querySelector(".robot");r.classList.remove("jump");void r.offsetWidth;r.classList.add("jump");robotSay("Tip: "+rand(TIPS));sfx("click");});
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){if(!$("sheet-modal").classList.contains("hidden"))closeSheet();else if(!$("lesson-modal").classList.contains("hidden"))closeLesson();return;}
   if($("lesson-modal").classList.contains("hidden")||!session||session.done)return;
@@ -536,6 +610,7 @@ lessonById("simple-sentences").sayLine={en:"I am a student.",odia:"ମୁଁ ଜ
 lessonById("questions").sayLine={en:"How are you?",odia:"ତୁମେ କେମିତି ଅଛ?"};
 lessonById("real-life").sayLine={en:"Nice to meet you.",odia:"ଆପଣଙ୍କୁ ଭେଟି ଆନନ୍ଦିତ।"};
 newDayChecks();regenHearts();saveState();applyTheme();render();updateInstallBtn();
+setTimeout(()=>robotSay(greetingLine()),800);
 // app shortcuts from the home-screen icon (long-press) e.g. ?action=quick
 {const a=new URLSearchParams(location.search).get("action");
  if(a){setTimeout(()=>{if(a==="continue")$("continue-btn").click();else if(a==="quick")startQuick();else if(a==="cards")openFlashcards();history.replaceState(null,"",location.pathname);},400);}}
