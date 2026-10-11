@@ -1,4 +1,4 @@
-# English Adventure — complete PWA (Android · iPhone · PC)
+# Odia to English Adventure (O-E Adventure) — complete PWA (Android · iPhone · PC)
 
 Installable, offline-ready English learning game with music, sound effects and voice.
 A PWA installs **only from a website that uses https://**, so first put these files online (free, 5 minutes), then install from that link.
@@ -37,4 +37,4 @@ Tap **📲 Install app** inside the game to see an **Install check** (https, man
 22 lessons · 5 question types · Odia ⇄ English · hearts, XP, ranks, badges, streaks · Speed Round · Flashcards · Mistakes Notebook · soft background music · sound effects · text-to-speech · dark mode · offline · backup code for moving progress.
 
 ## Files
-`index.html` `styles.css` `data.js` `app.js` `audio.js` `sw.js` `offline.html` `manifest.json` `assets/` (icons, screenshots) · hosting helpers: `_headers` `netlify.toml` `vercel.json` `.nojekyll`
+`index.html` `styles.css` `data.js` `app.js` `audio.js` `sw.js` `offline.html` `manifest.json` `` (icons, screenshots) · hosting helpers: `_headers` `netlify.toml` `vercel.json` `.nojekyll`

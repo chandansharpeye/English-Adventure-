@@ -20,9 +20,10 @@ function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replac
 /* ---------------- State ---------------- */
 const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
   wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
-  settings:{sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
+  srs:{},settings:{sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
 function sanitize(m){const f=freshState();
   ["completed","activeDays","mistakes","wordsSeen","badges"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
+  if(!m.srs||typeof m.srs!=="object")m.srs={};
   ["xp","hearts","streak","dailyCompleted","bestAccuracy","totalAnswered","totalCorrect","wordIndex","dailyGoal","heartTime","perfectCount","bestCombo","speedBest","mistakesFixed"].forEach(k=>{if(typeof m[k]!=="number"||!isFinite(m[k]))m[k]=f[k];});
   m.hearts=Math.max(0,Math.min(5,m.hearts));m.dailyGoal=[1,2,3].includes(m.dailyGoal)?m.dailyGoal:1;
   if(m.mode!=="odia-en"&&m.mode!=="en-odia")m.mode="odia-en";
@@ -102,6 +103,30 @@ function confetti(n){
     ps.forEach(p=>{p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);ctx.restore();});
     if(++f<110)requestAnimationFrame(tick);else{ctx.clearRect(0,0,c.width,c.height);c.classList.add("hidden");}})();}
 
+/* ---------------- Pronunciation (speech recognition) ---------------- */
+const SR_CLASS=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+function levenshtein(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let prev=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){const cur=[i];for(let j=1;j<=n;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur;}return prev[n];}
+function similarity(said,target){const x=norm(said),y=norm(target);if(!x&&!y)return 1;return 1-levenshtein(x,y)/Math.max(x.length,y.length,1);}
+function listenOnce(){return new Promise((resolve,reject)=>{
+  if(!SR_CLASS){reject(new Error("unsupported"));return;}
+  const r=new SR_CLASS();r.lang="en-IN";r.interimResults=false;r.maxAlternatives=3;let done=false;
+  const timer=setTimeout(()=>{try{r.stop();}catch{}},7000);
+  r.onresult=e=>{done=true;clearTimeout(timer);const alts=[];for(let i=0;i<e.results[0].length;i++)alts.push(e.results[0][i].transcript);resolve(alts);};
+  r.onerror=e=>{if(!done){done=true;clearTimeout(timer);reject(new Error(e.error||"error"));}};
+  r.onend=()=>{if(!done){done=true;clearTimeout(timer);reject(new Error("no-speech"));}};
+  try{r.start();}catch(err){done=true;reject(err);}});}
+/* ---------------- Spaced repetition (Leitner boxes) ---------------- */
+const DAY=()=>Math.floor(Date.now()/864e5);
+const SRS_GAP={1:1,2:2,3:4,4:7,5:14};          // days until next review per box
+function srsKey(it){return it.prompt+"|"+it.answer;}
+function srsRecord(item,correct){const k=srsKey(item);const e=state.srs[k]||{box:0,due:0};
+  e.box=correct?Math.min(5,Math.max(1,e.box+1)):1; e.due=DAY()+SRS_GAP[e.box]; state.srs[k]=e;}
+function dueMistakes(){return state.mistakes.filter(m=>{const e=state.srs[srsKey(m)];return !e||e.due<=DAY();});}
+function nextReviewDays(){const dues=state.mistakes.map(m=>(state.srs[srsKey(m)]||{due:DAY()}).due).filter(d=>d>DAY());return dues.length?Math.min(...dues)-DAY():0;}
+/* ---------------- Say items ---------------- */
+function sayItem(p){return {type:"say",prompt:`Say "${p.en}" aloud`,hint:"Pronunciation practice",answer:p.en,explanation:`${p.en} = ${p.odia}.`,say:p.en};}
+function sayLineItem(t){return {type:"say",prompt:`Say "${t.en}" aloud`,hint:"Say the whole sentence clearly",answer:t.en,explanation:`${t.en} = ${t.odia}`,say:t.en,threshold:.72};}
 /* ---------------- Question generators ---------------- */
 let _pool=null;
 function poolList(){if(_pool)return _pool;const m=new Map();
@@ -119,12 +144,12 @@ function vocabListen(p,dir,local){
   return {type:"listen",prompt:"Listen, then choose the Odia meaning",hint:"Listening practice",say:p.en,answer:p.odia,options:[p.odia,...distract(p,"odia",local,2)],explanation:`${p.en} = ${p.odia}.`};}
 function buildAuto(lesson,dir){
   const ps=shuffle(lesson.pairs.map(([en,odia])=>({en,odia})));const at=i=>ps[i%ps.length];
-  return [vocabMcq(at(0),dir,ps),vocabMcq(at(1),dir,ps),vocabListen(at(2),dir,ps),vocabMcq(at(3),dir,ps),
+  return [vocabMcq(at(0),dir,ps),vocabMcq(at(1),dir,ps),vocabListen(at(2),dir,ps),dir==="odia-en"?sayItem(at(3)):vocabMcq(at(3),dir,ps),
     dir==="odia-en"?typ(`Type the English word for ${at(4).odia}`,"Odia → English",at(4).en,`${at(4).en} = ${at(4).odia}.`):vocabMcq(at(4),dir,ps),
     mat(pick(lesson.pairs,4))];}
 function buildQuestions(lesson){
   if(lesson.pairs&&(lesson.auto||state.mode==="en-odia"))return buildAuto(lesson,state.mode);
-  const qs=lesson.questions.map(clone);if(lesson.pairs)qs.push(mat(pick(lesson.pairs,4)));return qs;}
+  const qs=lesson.questions.map(clone);if(lesson.pairs)qs.push(mat(pick(lesson.pairs,4)));if(lesson.sayLine&&state.mode==="odia-en")qs.push(sayLineItem(lesson.sayLine));return qs;}
 function quickQuestions(n,mcqOnly){
   const done=allLessons().filter(l=>state.completed.includes(l.id));const source=done.length?done:allLessons().slice(0,3);const items=[];
   source.forEach(l=>{const orig=lessonById(l.id);
@@ -188,7 +213,7 @@ function render(){
       unit.innerHTML=`<div class="unit-node">${done?"✓":level.icon}</div><div><p class="unit-title">${esc(lesson.title)}</p><p class="unit-description">${esc(lesson.desc)}</p><div class="unit-meta">${lessonCount(lesson)} questions · ${lesson.xp} XP</div></div><button class="unit-btn" ${unlocked?"":"disabled"}>${done?"Review":unlocked?"Start →":"🔒 Locked"}</button>`;
       unit.querySelector("button").addEventListener("click",()=>startLesson(level,lesson));path.appendChild(unit);});});
   // practice
-  $("mistake-count").textContent=state.mistakes.length?state.mistakes.length+" to fix":"All clear!";
+  const dueN=dueMistakes().length;$("mistake-count").textContent=!state.mistakes.length?"All clear!":dueN?dueN+" due today":"Nothing due · "+state.mistakes.length+" saved";
   $("mistakes-btn").classList.toggle("disabled",!state.mistakes.length);
   // badges
   $("badge-count").textContent=state.badges.length+" / "+BADGES.length;
@@ -210,7 +235,9 @@ function startQuick(){const qs=quickQuestions(8,false);if(!qs.length){showToast(
 function startSpeed(){const qs=quickQuestions(8,true);if(qs.length<4){showToast("Complete a lesson first to unlock Speed Round.");return;}
   startSession({kind:"speed",title:"Speed Round",icon:"⏱️",kicker:"SPEED ROUND",questions:qs,timed:true,restart:startSpeed});}
 function startMistakes(){if(!state.mistakes.length){showToast("No mistakes to fix. Great job! 🎉");return;}
-  startSession({kind:"mistakes",title:"Fix My Mistakes",icon:"🛠️",kicker:"MISTAKES",questions:shuffle(state.mistakes.map(clone)).slice(0,8),restart:startMistakes});}
+  const due=shuffle(dueMistakes()).slice(0,8);
+  if(!due.length){const d=nextReviewDays();showToast(`Nothing due today. Next review in ${d} day${d===1?"":"s"}. 👍`);return;}
+  startSession({kind:"mistakes",title:"Review Due",icon:"🛠️",kicker:"SPACED REVIEW",questions:due.map(clone),restart:startMistakes});}
 function startSession(o){
   stopTimer();
   if(o.kind==="lesson"){regenHearts();if(state.hearts<=0){showNoHearts(null,o);return;}}
@@ -218,25 +245,26 @@ function startSession(o){
   $("lesson-modal").classList.remove("hidden");syncModalLock();renderQuestion();}
 function heartsUI(){const v=session&&session.practice?"∞":state.hearts;$("lesson-hearts").textContent=v;$("top-hearts").textContent=state.hearts;}
 function coach(kind){return rand(kind==="good"?["Great job!","Super!","Well done!","Excellent!","You're on fire!","Perfect!"]:kind==="bad"?["No worries, we'll fix it!","Mistakes help us learn.","Almost! Try again later.","Keep going, you can do it!"]:["Take your time!","You can do this!","Think, then tap.","Read carefully.","Say it in your head first."]);}
-const INSTR={mcq:"Choose the best answer.",listen:"Tap 🔊 to listen, then choose.",type:"Type your answer below.",arrange:"Tap the words to build the sentence.",match:"Tap one item on each side to match them."};
+const INSTR={mcq:"Choose the best answer.",listen:"Tap 🔊 to listen, then choose.",type:"Type your answer below.",arrange:"Tap the words to build the sentence.",match:"Tap one item on each side to match them.",say:"Tap the mic and say it clearly."};
 function renderQuestion(){
   const s=session;stopTimer();const item=s.queue[s.idx];s.item=item;s.answered=false;s.selected=null;s.arranged=[];
   heartsUI();$("lesson-progress-bar").style.width=(s.idx/s.queue.length*100)+"%";
   const retry=item._retry,pre=previewText(item);
-  const speakBtn=item.type==="listen"?`<div class="listen-row"><button class="speak-btn big" id="speak-q" aria-label="Play audio">🔊</button><button class="speak-btn" id="speak-slow" aria-label="Play slowly">🐢</button></div>`:pre?`<button class="speak-btn" id="speak-q" aria-label="Hear it">🔊</button>`:"";
+  const speakBtn=item.type==="listen"?`<div class="listen-row"><button class="speak-btn big" id="speak-q" aria-label="Play audio">🔊</button><button class="speak-btn" id="speak-slow" aria-label="Play slowly">🐢</button></div>`:pre?`<div class="listen-row"><button class="speak-btn" id="speak-q" aria-label="Hear it">🔊 Normal</button><button class="speak-btn" id="speak-slow2" aria-label="Play slowly">🐢 Slow</button></div>`:"";
   $("lesson-screen").innerHTML=`<div class="lesson-content"><p class="lesson-kicker">${esc(s.kicker)} · ${retry?"REVIEW":"QUESTION "+(s.idx+1)+"/"+s.queue.length}</p><h2>${esc(s.title)}</h2>
     <p class="coach"><span class="coach-bot">🤖</span><span id="coach-line">${esc(retry?"Let's try this one again!":coach())}</span></p>
     ${s.timed?`<div class="timer"><i id="timer-bar"></i></div>`:""}
     <div class="question-card"><div class="question-emoji">${s.icon}</div><p class="question-prompt">${esc(item.prompt)}</p><p class="question-hint">${esc(item.hint||"")}</p>${speakBtn}</div>
     <p class="lesson-instruction">${INSTR[item.type]||INSTR.mcq}</p><div class="answer-area" id="answer-area"></div><div id="feedback" aria-live="polite"></div>
     <div class="lesson-bottom"><span class="combo" id="combo-pill">${s.combo>=2?"🔥 Combo ×"+s.combo:"Correct answer earns XP ⭐"}</span><button class="primary-btn" id="check-btn" disabled>${item.type==="match"?"Match all pairs":"Check answer"}</button></div></div>`;
-  const sq=$("speak-q");if(sq)sq.addEventListener("click",()=>speak(pre||item.say));const ss=$("speak-slow");if(ss)ss.addEventListener("click",()=>speak(item.say,.5));
+  const sq=$("speak-q");if(sq)sq.addEventListener("click",()=>speak(pre||item.say));const ss=$("speak-slow");if(ss)ss.addEventListener("click",()=>speak(item.say,.5));const s2=$("speak-slow2");if(s2)s2.addEventListener("click",()=>speak(pre,.5));
   if(item.type==="listen"&&state.settings.autoRead)setTimeout(()=>{if(session===s&&s.item===item&&!s.answered)speak(item.say);},350);
   $("check-btn").addEventListener("click",onPrimary);
   if(item.type==="mcq"||item.type==="listen")buildChoices(item);
   else if(item.type==="type")buildTyping();
   else if(item.type==="arrange")buildArrange(item);
   else if(item.type==="match")buildMatch(item);
+  else if(item.type==="say")buildSay(item);
   if(s.timed)startTimer();}
 function buildChoices(item){const list=$("answer-area");list.className="answer-list";
   shuffle(item.options.slice()).forEach((choice,i)=>{const b=el("button","answer-option");b.dataset.value=choice;b.innerHTML=`<span class="key">${i+1}</span><span>${esc(choice)}</span>`;
@@ -257,6 +285,35 @@ function drawArrange(){const s=session,zone=$("arr-zone"),bank=$("arr-bank");if(
   s.arranged.forEach(id=>{const b=tile(id);b.addEventListener("click",()=>{if(s.answered)return;s.arranged=s.arranged.filter(x=>x!==id);sfx("click");drawArrange();});zone.appendChild(b);});
   s.bank.forEach(id=>{const b=tile(id);if(s.arranged.includes(id)){b.classList.add("used");b.disabled=true;}else b.addEventListener("click",()=>{if(s.answered)return;s.arranged.push(id);sfx("click");drawArrange();});bank.appendChild(b);});
   if(!s.answered)$("check-btn").disabled=!s.arranged.length;}
+function buildSay(item){
+  const a=$("answer-area");
+  const model=`<div class="listen-row"><button class="speak-btn" id="say-model">🔊 Listen first</button><button class="speak-btn" id="say-model-slow">🐢 Slow</button></div>`;
+  if(SR_CLASS){
+    a.innerHTML=`${model}<button class="mic-btn" id="mic-btn">🎤 Tap and say</button><p class="say-status" id="say-status">Say it clearly. We will check your pronunciation.</p>`;
+    $("mic-btn").addEventListener("click",()=>sayNow(item));
+  }else{
+    a.innerHTML=`${model}<p class="say-status">Voice is not supported in this browser. Type the word instead.</p><input id="type-input" class="type-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type here…" aria-label="Your answer">`;
+    const inp=$("type-input");inp.addEventListener("input",()=>{$("check-btn").disabled=!inp.value.trim();});
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();onPrimary();}});setTimeout(()=>{try{inp.focus();}catch{}},60);
+  }
+  $("say-model").addEventListener("click",()=>speak(item.say));
+  $("say-model-slow").addEventListener("click",()=>speak(item.say,.5));
+}
+async function sayNow(item){
+  const s=session;if(!s||s.answered||s.listening)return;s.listening=true;
+  const btn=$("mic-btn"),st=$("say-status");btn.disabled=true;btn.textContent="🎙️ Listening…";st.textContent="Speak now…";
+  try{
+    const alts=await listenOnce();s.listening=false;
+    const score=Math.max(...alts.map(x=>similarity(x,item.answer)));
+    const thr=item.threshold||.8;
+    st.textContent=`You said: “${alts[0]}”`;
+    resolve(score>=thr,item.answer,alts[0]);
+  }catch(err){
+    s.listening=false;btn.disabled=false;btn.textContent="🎤 Try again";
+    const msg={"not-allowed":"Microphone is blocked. Allow it in the browser settings, then try again.","service-not-allowed":"Microphone is blocked. Allow it in the browser settings, then try again.","audio-capture":"No microphone found on this device.","network":"Voice recognition needs internet. Check your connection and try again.","no-speech":"I could not hear you. Speak a little louder and try again."}[err.message]||"I could not hear that clearly. Try again.";
+    st.textContent=msg;
+  }
+}
 function buildMatch(item){const s=session;s.matched=new Set();s.msel=null;s.mm=0;
   $("answer-area").innerHTML=`<div class="match-grid"><div class="match-col" id="m-left"></div><div class="match-col" id="m-right"></div></div>`;
   const mk=(i,t,side)=>{const b=el("button","match-tile");b.textContent=t;b.dataset.i=i;b.dataset.side=side;b.addEventListener("click",()=>matchClick(b));return b;};
@@ -280,15 +337,18 @@ function onPrimary(){const s=session;if(!s||s.done)return;
   const item=s.item;
   if(item.type==="mcq"||item.type==="listen"){if(s.selected==null)return;resolve(s.selected===item.answer,item.answer,s.selected);}
   else if(item.type==="type"){const v=$("type-input").value;if(!v.trim())return;resolve(norm(v)===norm(item.answer),item.answer,v);}
+  else if(item.type==="say"){if(!SR_CLASS){const v=($("type-input")||{}).value||"";if(!v.trim())return;resolve(norm(v)===norm(item.answer),item.answer,v);}}
   else if(item.type==="arrange"){if(!s.arranged.length)return;const user=s.arranged.map(i=>s.tokens[i]).join(" ");resolve(norm(user)===norm(item.answer),item.answer,user);}}
 function resolve(correct,correctText,userAnswer,opts){
   opts=opts||{};const s=session;if(!s||s.answered)return;const item=s.item;s.answered=true;stopTimer();
   const retry=!!item._retry;let gain=0;
+  if(!retry)srsRecord(item,correct);
+  {const mb=$("mic-btn");if(mb)mb.disabled=true;}
   if(!retry)state.totalAnswered++;
   if(correct){sfx("correct");
     if(!retry){s.correct++;state.totalCorrect++;s.combo++;s.bestCombo=Math.max(s.bestCombo,s.combo);state.bestCombo=Math.max(state.bestCombo,s.combo);
       const base=s.kind==="lesson"?5:s.kind==="speed"?3:2,bonus=s.kind==="lesson"&&s.combo>=3?Math.min(s.combo-2,3):0;gain=base+bonus;state.xp+=gain;s.xpGained+=gain;}
-    if(s.kind==="mistakes")removeMistake(item);
+    if(s.kind==="mistakes"){const e=state.srs[srsKey(item)];if(e&&e.box>=4)removeMistake(item);}
   }else{sfx("wrong");s.combo=0;
     if(!opts.skipHeart&&s.kind==="lesson")loseHeart();
     if(s.kind!=="mistakes"&&!retry)addMistake(item);
@@ -389,7 +449,7 @@ function openSettings(){
     <p class="eyebrow settings-label">BACKUP & TRANSFER</p><p class="muted">Copy this code to keep your progress safe or move it to another device. Paste a code and tap Restore to load it.</p>
     <textarea id="backup-code" class="backup" rows="3" spellcheck="false" aria-label="Backup code">${esc(b64e(JSON.stringify(state)))}</textarea>
     <div class="result-actions left"><button class="secondary-btn" id="copy-backup">Copy code</button><button class="secondary-btn" id="restore-backup">Restore from code</button></div>
-    <p class="eyebrow settings-label">DANGER ZONE</p><button class="secondary-btn danger" id="reset-progress">Reset all progress</button><p class="muted version">English Adventure v2.0</p>`);
+    <p class="eyebrow settings-label">DANGER ZONE</p><button class="secondary-btn danger" id="reset-progress">Reset all progress</button><p class="muted version">O-E Adventure v2.0</p>`);
   $("set-sound").addEventListener("change",e=>{state.settings.sound=e.target.checked;saveState();renderTopStats();if(e.target.checked)sfx("correct");});
   $("set-read").addEventListener("change",e=>{state.settings.autoRead=e.target.checked;saveState();});
   const si=$("set-install");if(si)si.addEventListener("click",()=>$("install-btn").click());
@@ -436,7 +496,7 @@ function installHelp(){
   else if(isIOS())body=`<ol class="steps"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button ⬆️.</li><li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol>`;
   else if(isAndroid())body=`<ol class="steps"><li>Open this page in <b>Chrome</b>.</li><li>Tap the <b>⋮</b> menu at the top right.</li><li>Tap <b>Install app</b> (or <b>Add to Home screen</b>).</li></ol>`;
   else body=`<ol class="steps"><li><b>Chrome:</b> click the install icon ⊕ at the right end of the address bar, or ⋮ → <b>Cast, save and share → Install page as app</b>.</li><li><b>Edge:</b> ⋯ → <b>Apps → Install this site as an app</b>.</li></ol>`;
-  openSheet("Install English Adventure",body+`<div class="checks" id="pwa-checks"><b>Install check</b><span>Checking…</span></div><p class="muted">Not showing? Reload the page once, wait 5 seconds, and try again. The site must be opened with <b>https://</b>.</p>`);
+  openSheet("Install Odia to English Adventure",body+`<div class="checks" id="pwa-checks"><b>Install check</b><span>Checking…</span></div><p class="muted">Not showing? Reload the page once, wait 5 seconds, and try again. The site must be opened with <b>https://</b>.</p>`);
   if(location.protocol!=="file:")pwaStatus().then(rows=>{const box=$("pwa-checks");if(box)box.innerHTML="<b>Install check</b>"+rows.map(([ok,t])=>`<span class="${ok?"ok":"bad"}">${ok===true?"✅":ok===false?"❌":"⬜"} ${t}</span>`).join("");});}
 async function pwaStatus(){
   const rows=[[window.isSecureContext,"Secure connection (https)"]];let man=false,sw=false;
@@ -449,7 +509,7 @@ async function pwaStatus(){
 /* ---- friendly install banner (shown once, after a few seconds) ---- */
 function showInstallBanner(){
   const bn=$("install-banner");if(!bn||isStandalone()||state.settings.bannerDismissed||!(deferredInstall||isIOS()))return;
-  $("banner-text").textContent=isIOS()?"Add English Adventure to your Home Screen for the full app.":"Install English Adventure for a full-screen app that works offline.";
+  $("banner-text").textContent=isIOS()?"Add O-E Adventure to your Home Screen for the full app.":"Install O-E Adventure for a full-screen app that works offline.";
   bn.classList.remove("hidden");}
 $("banner-install").addEventListener("click",()=>{$("install-banner").classList.add("hidden");$("install-btn").click();});
 $("banner-close").addEventListener("click",()=>{$("install-banner").classList.add("hidden");state.settings.bannerDismissed=true;saveState();});
@@ -472,6 +532,9 @@ if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventLis
     reg.addEventListener("updatefound",()=>{const nw=reg.installing;if(nw)nw.addEventListener("statechange",()=>{if(nw.state==="installed"&&navigator.serviceWorker.controller)showToast("Update ready ✨ Reopen the app to get it.");});});
   }).catch(()=>{}));}
 
+lessonById("simple-sentences").sayLine={en:"I am a student.",odia:"ମୁଁ ଜଣେ ଛାତ୍ର।"};
+lessonById("questions").sayLine={en:"How are you?",odia:"ତୁମେ କେମିତି ଅଛ?"};
+lessonById("real-life").sayLine={en:"Nice to meet you.",odia:"ଆପଣଙ୍କୁ ଭେଟି ଆନନ୍ଦିତ।"};
 newDayChecks();regenHearts();saveState();applyTheme();render();updateInstallBtn();
 // app shortcuts from the home-screen icon (long-press) e.g. ?action=quick
 {const a=new URLSearchParams(location.search).get("action");
