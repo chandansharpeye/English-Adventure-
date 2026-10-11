@@ -1,42 +1,54 @@
-# English Adventure
+# English Adventure v2
 
-A separate, beginner-friendly English learning game for GitHub Pages. It includes Odia/English practice, a friendly CSS-drawn robot teacher, levels, multiple-choice quizzes, XP, hearts, streaks, local progress saving, responsive styling, and a service worker for offline caching.
+A beginner-friendly English learning game (Odia ⇄ English) for GitHub Pages. Installable as a phone/desktop app (PWA), works offline, and needs no build step.
 
-## Run on your Windows PC
+## What's new in v2
+**Learning**
+- 22 lessons (was 12): Family, Food, Body & Animals, Days, Opposites, Build It!, Plurals, Can/Should/Must, Real-Life Talk, Fix the Mistake
+- 5 question types: multiple choice, listening, type the answer, word-arrange sentences, match pairs
+- Wrong answers come back at the end of the lesson (second chance)
+- Mistakes Notebook, Quick Practice, Speed Round (15 s per question), Flashcards (35 words, with sound)
+- English → Odia mode now builds real vocabulary quizzes
 
-### Easiest local preview
-1. Extract `English-Adventure.zip`.
-2. Open the extracted folder.
-3. Double-click `index.html` to preview the game.
-4. Note: service-worker offline caching is enabled on a hosted HTTPS site or a local development server, not when opened directly as `file://`.
+**Game feel**
+- Combo XP, ranks (Rookie → Legend), 11 badges, daily goals with bonus XP, 7-day streak calendar
+- Hearts refill every 20 minutes (or spend 30 XP); Practice never costs hearts
+- Confetti, animated robot teacher (tap him!), dark mode
 
-### Recommended local server (Python)
-If Python is installed:
-1. Open the `English-Adventure` folder in File Explorer.
-2. Click the address bar, type `cmd`, and press Enter.
-3. Run:
-   ```bash
-   py -m http.server 8000
-   ```
-4. Open `http://localhost:8000` in your browser.
-5. Press `Ctrl+C` in the command window to stop the server.
+**Sound**
+- Soft generative background music (calm chords + gentle bells, no audio files, works offline)
+- Sound effects for correct, wrong, combos, badges, rank-up, hearts, flashcards and the speed-round countdown
+- Text-to-speech: tap 🔊 to hear any English word or sentence; music lowers while the voice speaks
+- Separate music and effects volume sliders in Settings (⚙️)
+
+**App (PWA)**
+- New robot icon (regular, maskable and Apple touch icons), install button, home-screen shortcuts (Continue / Quick practice / Flashcards), install-screen screenshots
+- Offline support, safe-area/notch aware, sticky top bar, standalone full-screen mode
+- Backup / restore code in Settings to move progress between devices
+
+Old v1 progress is kept automatically.
+
+## Files
+`index.html` · `styles.css` · `data.js` (lessons, words, badges) · `app.js` (game logic) · `audio.js` (music engine) · `sw.js` (offline) · `manifest.json` · `assets/` (icons, screenshots)
+
+## Run on your PC
+Double-click `index.html` to preview (music, voice and offline need a server or HTTPS). Recommended:
+```bash
+py -m http.server 8000      # then open http://localhost:8000
+```
 
 ## Publish free with GitHub Pages
-1. Sign in at https://github.com.
-2. Create a **Public** repository named `english-adventure`.
-3. Upload all files and folders from this extracted project. Ensure `index.html` is at the repository root, not inside an extra nested folder.
-4. Open **Settings → Pages**.
-5. Under **Build and deployment**, select **Deploy from a branch**.
-6. Select branch `main` and folder `/(root)`, then click **Save**.
-7. Wait a few minutes. Your URL will look like:
-   `https://YOUR-USERNAME.github.io/english-adventure/`
+1. Create a **Public** repository (e.g. `english-adventure`) and upload everything, with `index.html` at the repository root.
+2. **Settings → Pages → Deploy from a branch → `main` / `(root)` → Save.**
+3. Open `https://YOUR-USERNAME.github.io/english-adventure/`
 
-Official guide: https://pages.github.com/
+## Install as an app
+- **Android / Chrome / Edge:** open the site and tap **Install app** (or the browser's install option).
+- **iPhone / iPad (Safari):** Share → **Add to Home Screen**.
 
-## Important notes
-- Progress is stored in this browser on this device. Clearing site data or changing browsers can remove or separate progress. There is no cross-device account or cloud sync in this starter version.
-- Offline use starts after the site has been opened online and the app files have been cached. On GitHub Pages, use the HTTPS website URL.
-- The reverse-language switch is an initial practice mode; this starter version does not yet have a fully authored Odia translation for every English question. Extend the question data and reverse-answer mapping for complete bilingual coverage.
-- The Google Fonts import is optional and needs internet to fetch the fonts; system fallback fonts still work offline.
-- The app is an educational starter project, not a copy of Duolingo's branding or assets.
-- This is a client-side app. Do not put passwords, private data, API keys, or student-sensitive information in its public repository.
+## Notes
+- Music starts after your first tap (browsers block autoplay). Toggle it with the 🎵 button.
+- Voice quality depends on the voices installed on the device.
+- Progress is stored in this browser. Use Settings → Backup code to move it.
+- After you update the files on GitHub, reopen the app once or twice to receive the new version (service worker cache).
+- Client-side only: don't put passwords or private data in the repository.

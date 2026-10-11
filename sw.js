@@ -1,11 +1,18 @@
-const CACHE_NAME = "english-adventure-v1";
+const CACHE_NAME = "english-adventure-v3";
 const APP_FILES = [
   "./",
   "./index.html",
   "./styles.css",
+  "./audio.js",
+  "./data.js",
   "./app.js",
   "./manifest.json",
-  "./assets/icon.svg"
+  "./assets/icon.svg",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
+  "./assets/icon-maskable-512.png",
+  "./assets/apple-touch-icon.png",
+  "./assets/favicon-32.png"
 ];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)));
@@ -17,18 +24,18 @@ self.addEventListener("activate", event => {
   );
   self.clients.claim();
 });
+// Network first (so updates show up right away), cache as the offline fallback.
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+  const sameOrigin = new URL(event.request.url).origin === self.location.origin;
+  if (!sameOrigin) return;
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (response && response.status === 200 && new URL(event.request.url).origin === self.location.origin) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        }
-        return response;
-      }).catch(() => caches.match("./index.html"));
-    })
+    fetch(event.request).then(response => {
+      if (response && response.status === 200) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+      }
+      return response;
+    }).catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html")))
   );
 });

@@ -1,214 +1,450 @@
-const LEVELS = [
-  {id:"starter",name:"First Steps",subtitle:"Start with everyday English",level:"BEGINNER",icon:"🌱",color:"green",lessons:[
-    {id:"greetings",title:"Hello & Greetings",desc:"Say hello and introduce yourself",xp:20,questions:[
-      q("How do you say ନମସ୍କାର in English?","ନମସ୍କାର","Hello",["Goodbye","Sorry","Hello"],"Hello means ନମସ୍କାର."),
-      q("Choose the correct meaning of 'Thank you'.","ଧନ୍ୟବାଦ","Thank you",["Please","Thank you","Good night"],"Thank you means ଧନ୍ୟବାଦ."),
-      q("Complete: My name ___ Rina.","ମୋ ନାମ ରୀନା।","is",["am","is","are"],"Use 'is' with a person's name: My name is Rina."),
-      q("What do you say when you meet someone in the morning?","ସକାଳେ ଭେଟିଲେ କ'ଣ କହିବେ?","Good morning",["Good night","Good morning","See you"],"Good morning is a greeting used in the morning.")
-    ]},
-    {id:"daily-words",title:"Everyday Words",desc:"Learn useful words around you",xp:20,questions:[
-      q("ଜଳ means…","Choose the English word","Water",["Water","Fire","Air"],"Water = ଜଳ."),
-      q("ବହି means…","Choose the English word","Book",["Bag","Book","Door"],"Book = ବହି."),
-      q("What is the Odia meaning of 'Friend'?","Choose the correct meaning","ବନ୍ଧୁ",["ଶିକ୍ଷକ","ବନ୍ଧୁ","ଘର"],"Friend = ବନ୍ଧୁ."),
-      q("What is the English word for ଘର?","Choose the English word","House",["School","House","Road"],"House = ଘର.")
-    ]},
-    {id:"numbers-colors",title:"Numbers & Colours",desc:"Count and describe the world",xp:20,questions:[
-      q("What number is ତିନି?","Odia → English","Three",["Two","Three","Four"],"Three = ତିନି."),
-      q("What is the Odia meaning of 'Red'?","English → Odia","ଲାଲ",["ନୀଳ","ସବୁଜ","ଲାଲ"],"Red = ଲାଲ."),
-      q("Which word means ଦଶ?","Choose the English word","Ten",["Eight","Ten","Twelve"],"Ten = ଦଶ."),
-      q("The sky is often…","ଆକାଶ ସାଧାରଣତଃ କେଉଁ ରଙ୍ଗର?","Blue",["Blue","Pink","Brown"],"Blue = ନୀଳ.")
-    ]}
-  ]},
-  {id:"builder",name:"Sentence Builder",subtitle:"Turn words into sentences",level:"ELEMENTARY",icon:"🧩",color:"blue",lessons:[
-    {id:"simple-sentences",title:"Simple Sentences",desc:"Build clear, useful sentences",xp:25,questions:[
-      q("Choose the correct sentence.","ମୁଁ ଜଣେ ଛାତ୍ର।","I am a student.",["I is a student.","I am a student.","I are a student."],"Use 'am' with 'I'."),
-      q("Translate: ସେ ଖୁସି ଅଛି।","Odia → English","He is happy.",["He happy.","He is happy.","He are happy."],"He is happy = ସେ ଖୁସି ଅଛି।"),
-      q("Fill in: They ___ my friends.","ସେମାନେ ମୋ ବନ୍ଧୁ।","are",["is","am","are"],"Use 'are' with they."),
-      q("Translate: ମୁଁ ପାଣି ପିଏ।","Odia → English","I drink water.",["I drink water.","I eats water.","I drinking water."],"I drink water = ମୁଁ ପାଣି ପିଏ।")
-    ]},
-    {id:"questions",title:"Ask a Question",desc:"Learn how to ask politely",xp:25,questions:[
-      q("Which sentence asks someone's name?","କାହାର ନାମ ପଚାରିବାକୁ…","What is your name?",["Where are you?","What is your name?","How old is your book?"],"What is your name? = ତୁମ ନାମ କ'ଣ?"),
-      q("Translate: ତୁମେ କେମିତି ଅଛ?","Odia → English","How are you?",["Who are you?","How are you?","Where are you?"],"How are you? = ତୁମେ କେମିତି ଅଛ?"),
-      q("Choose the polite word for ଦୟାକରି.","English → Odia","Please",["Please","Never","Yesterday"],"Please = ଦୟାକରି."),
-      q("Complete: ___ is my school?","ମୋ ସ୍କୁଲ୍ କେଉଁଠି?","Where",["Who","Where","When"],"Where asks about a place.")
-    ]},
-    {id:"verbs",title:"Action Words",desc:"Use common verbs correctly",xp:25,questions:[
-      q("What is the past tense of GO?","ଗତକାଲି ମୁଁ ସ୍କୁଲକୁ…","Went",["Goed","Going","Went"],"Go → went."),
-      q("Choose the meaning of 'Read'.","English → Odia","ପଢ଼ିବା",["ଲେଖିବା","ପଢ଼ିବା","ଖେଳିବା"],"Read = ପଢ଼ିବା."),
-      q("She ___ a book every day.","ସେ ପ୍ରତିଦିନ ବହି ପଢ଼େ।","reads",["read","reads","reading"],"With he/she/it in the simple present, often add -s."),
-      q("What is the past tense of EAT?","Choose the correct form","Ate",["Eated","Ate","Eating"],"Eat → ate.")
-    ]}
-  ]},
-  {id:"explorer",name:"Grammar Explorer",subtitle:"Make your English stronger",level:"INTERMEDIATE",icon:"🧭",color:"orange",lessons:[
-    {id:"tenses",title:"Present, Past & Future",desc:"Choose the right tense",xp:30,questions:[
-      q("Every day, I ___ to school.","Simple present","go",["go","went","will went"],"Use 'go' for a regular habit with I."),
-      q("Yesterday, she ___ a letter.","Simple past","wrote",["writes","will write","wrote"],"Yesterday signals the past: write → wrote."),
-      q("Tomorrow, we ___ our grandmother.","Future tense","will visit",["visited","will visit","visits"],"Use will + base verb for the future."),
-      q("They are ___ football now.","Present continuous","playing",["play","played","playing"],"Are + verb-ing describes an action happening now.")
-    ]},
-    {id:"articles",title:"A, An & The",desc:"Use articles with confidence",xp:30,questions:[
-      q("I ate ___ apple.","Use the correct article","an",["a","an","the"],"Use 'an' before a vowel sound, as in apple."),
-      q("She has ___ book.","Use the correct article","a",["a","an","the"],"Use 'a' before a consonant sound, as in book."),
-      q("The sun rises in ___ east.","Complete the sentence","the",["a","an","the"],"We say 'the east' in this expression."),
-      q("He is ___ honest person.","Choose by sound","an",["a","an","the"],"Honest begins with a vowel sound because the h is silent.")
-    ]},
-    {id:"prepositions",title:"Place & Time Words",desc:"In, on, at and more",xp:30,questions:[
-      q("The book is ___ the table.","ବହିଟି ଟେବୁଲ୍ ଉପରେ ଅଛି।","on",["in","on","at"],"Use 'on' for something resting on a surface."),
-      q("I wake up ___ 6 o'clock.","Choose the preposition","at",["in","on","at"],"Use 'at' with a specific clock time."),
-      q("My birthday is ___ August.","Choose the preposition","in",["in","on","at"],"Use 'in' with months."),
-      q("We have class ___ Monday.","Choose the preposition","on",["in","on","at"],"Use 'on' with days.")
-    ]}
-  ]},
-  {id:"champion",name:"English Champion",subtitle:"Use English in real life",level:"ADVANCED",icon:"🏆",color:"pink",lessons:[
-    {id:"connectors",title:"Connect Your Ideas",desc:"Because, but, although and so",xp:35,questions:[
-      q("I was tired, ___ I finished my homework.","Choose a connector","but",["because","but","unless"],"'But' shows contrast between two ideas."),
-      q("I stayed home ___ it was raining.","Choose a connector","because",["because","although","or"],"'Because' gives a reason."),
-      q("Study well ___ you can improve.","Choose a connector","so that",["so that","but","unless"],"'So that' introduces a purpose."),
-      q("___ it was late, they continued working.","Choose a connector","Although",["Because","Although","So"],"'Although' introduces a contrast.")
-    ]},
-    {id:"vocabulary",title:"Power Vocabulary",desc:"Choose precise words",xp:35,questions:[
-      q("A person who is willing to help is…","Choose the best word","Helpful",["Careless","Helpful","Sleepy"],"Helpful means ready to help others."),
-      q("What does 'improve' mean?","English → Odia","ଉନ୍ନତ କରିବା",["ଭୁଲିଯିବା","ଉନ୍ନତ କରିବା","ବନ୍ଦ କରିବା"],"Improve = ଉନ୍ନତ କରିବା."),
-      q("Choose a synonym for 'begin'.","A synonym has a similar meaning","Start",["Finish","Start","Forget"],"Begin and start have similar meanings."),
-      q("Which word means 'very important'?","Choose the best word","Essential",["Ordinary","Essential","Tiny"],"Essential means very important or necessary.")
-    ]},
-    {id:"reading",title:"Reading Detective",desc:"Understand meaning from context",xp:35,questions:[
-      q("Rita carried an umbrella because dark clouds filled the sky. Why?","Read the sentence carefully","She expected rain.",["She wanted to swim.","She expected rain.","She was going to sleep."],"Dark clouds and an umbrella suggest she expected rain."),
-      q("The road was slippery after the storm. What does slippery mean?","Choose the closest meaning","Hard to walk on safely",["Very colourful","Hard to walk on safely","Very quiet"],"A slippery surface can make you lose your footing."),
-      q("Mina saved a little money each week. Eventually, she bought a bicycle. What helped her?","Find the main idea","Saving money",["Spending everything","Saving money","Losing her books"],"Saving a little regularly helped her reach her goal."),
-      q("Choose the best title: A passage about daily practice helping a learner speak better.","Find the main idea","Practice Makes Progress",["A Rainy Afternoon","Practice Makes Progress","My New Shoes"],"The title should match the central idea.")
-    ]}
-  ]}
-];
-function q(prompt,hint,answer,options,explanation){return {prompt,hint,answer,options,explanation};}
-const WORDS=[
- {en:"Brave",odia:"ସାହସୀ",example:"The brave student tried again."},
- {en:"Curious",odia:"ଜିଜ୍ଞାସୁ",example:"A curious learner asks questions."},
- {en:"Kind",odia:"ଦୟାଳୁ",example:"Be kind to others."},
- {en:"Improve",odia:"ଉନ୍ନତ କରିବା",example:"I practise daily to improve my English."},
- {en:"Dream",odia:"ସ୍ୱପ୍ନ",example:"Work towards your dream."},
- {en:"Friend",odia:"ବନ୍ଧୁ",example:"My friend helps me learn."},
- {en:"Learn",odia:"ଶିଖିବା",example:"We learn something new every day."},
- {en:"Courage",odia:"ସାହସ",example:"Courage helps us try again."}
-];
-const REVERSE_BANK = [
- {prompt:"What is the Odia meaning of ‘Hello’?",hint:"English → Odia",answer:"ନମସ୍କାର",options:["ବିଦାୟ","ନମସ୍କାର","ଧନ୍ୟବାଦ"],explanation:"Hello = ନମସ୍କାର."},
- {prompt:"What is the Odia meaning of ‘Thank you’?",hint:"English → Odia",answer:"ଧନ୍ୟବାଦ",options:["ଦୟାକରି","ଧନ୍ୟବାଦ","ଶୁଭରାତ୍ରି"],explanation:"Thank you = ଧନ୍ୟବାଦ."},
- {prompt:"What is the Odia meaning of ‘Water’?",hint:"English → Odia",answer:"ଜଳ",options:["ଜଳ","ଅଗ୍ନି","ବାୟୁ"],explanation:"Water = ଜଳ."},
- {prompt:"What is the Odia meaning of ‘Book’?",hint:"English → Odia",answer:"ବହି",options:["ବ୍ୟାଗ","ବହି","ଦ୍ୱାର"],explanation:"Book = ବହି."},
- {prompt:"What is the Odia meaning of ‘House’?",hint:"English → Odia",answer:"ଘର",options:["ସ୍କୁଲ୍","ଘର","ରାସ୍ତା"],explanation:"House = ଘର."},
- {prompt:"What is the Odia meaning of ‘Friend’?",hint:"English → Odia",answer:"ବନ୍ଧୁ",options:["ଶିକ୍ଷକ","ବନ୍ଧୁ","ଛାତ୍ର"],explanation:"Friend = ବନ୍ଧୁ."},
- {prompt:"What is the Odia meaning of ‘Red’?",hint:"English → Odia",answer:"ଲାଲ",options:["ନୀଳ","ସବୁଜ","ଲାଲ"],explanation:"Red = ଲାଲ."},
- {prompt:"What is the Odia meaning of ‘Three’?",hint:"English → Odia",answer:"ତିନି",options:["ଦୁଇ","ତିନି","ଚାରି"],explanation:"Three = ତିନି."},
- {prompt:"Translate: ‘I am a student.’",hint:"English → Odia",answer:"ମୁଁ ଜଣେ ଛାତ୍ର।",options:["ମୁଁ ଜଣେ ଛାତ୍ର।","ସେ ଖୁସି ଅଛି।","ମୁଁ ପାଣି ପିଏ।"],explanation:"I am a student = ମୁଁ ଜଣେ ଛାତ୍ର।"},
- {prompt:"Translate: ‘How are you?’",hint:"English → Odia",answer:"ତୁମେ କେମିତି ଅଛ?",options:["ତୁମ ନାମ କ'ଣ?","ତୁମେ କେମିତି ଅଛ?","ତୁମେ କେଉଁଠି ଅଛ?"],explanation:"How are you? = ତୁମେ କେମିତି ଅଛ?"},
- {prompt:"What is the Odia meaning of ‘Please’?",hint:"English → Odia",answer:"ଦୟାକରି",options:["ଦୟାକରି","ଗତକାଲି","କେବେ"],explanation:"Please = ଦୟାକରି."},
- {prompt:"What is the Odia meaning of ‘Read’?",hint:"English → Odia",answer:"ପଢ଼ିବା",options:["ଲେଖିବା","ପଢ଼ିବା","ଖେଳିବା"],explanation:"Read = ପଢ଼ିବା."},
- {prompt:"What is the Odia meaning of ‘Improve’?",hint:"English → Odia",answer:"ଉନ୍ନତ କରିବା",options:["ଭୁଲିଯିବା","ଉନ୍ନତ କରିବା","ବନ୍ଦ କରିବା"],explanation:"Improve = ଉନ୍ନତ କରିବା."},
- {prompt:"What is the Odia meaning of ‘Kind’?",hint:"English → Odia",answer:"ଦୟାଳୁ",options:["ଦୟାଳୁ","ରାଗୀ","କ୍ଲାନ୍ତ"],explanation:"Kind = ଦୟାଳୁ."},
- {prompt:"What is the Odia meaning of ‘Brave’?",hint:"English → Odia",answer:"ସାହସୀ",options:["ଭୀରୁ","ସାହସୀ","ଧୀର"],explanation:"Brave = ସାହସୀ."},
- {prompt:"What is the Odia meaning of ‘Learn’?",hint:"English → Odia",answer:"ଶିଖିବା",options:["ଶିଖିବା","ଶୋଇବା","ଦୌଡ଼ିବା"],explanation:"Learn = ଶିଖିବା."},
- {prompt:"What is the Odia meaning of ‘Courage’?",hint:"English → Odia",answer:"ସାହସ",options:["ସାହସ","ଭୟ","ନିଦ"],explanation:"Courage = ସାହସ."},
- {prompt:"What is the Odia meaning of ‘Start’?",hint:"English → Odia",answer:"ଆରମ୍ଭ କରିବା",options:["ଶେଷ କରିବା","ଆରମ୍ଭ କରିବା","ଭୁଲିବା"],explanation:"Start = ଆରମ୍ଭ କରିବା."},
- {prompt:"What is the Odia meaning of ‘Helpful’?",hint:"English → Odia",answer:"ସାହାଯ୍ୟକାରୀ",options:["ଅଳସୁଆ","ସାହାଯ୍ୟକାରୀ","ଦୁଃଖୀ"],explanation:"Helpful = ସାହାଯ୍ୟକାରୀ."},
- {prompt:"What is the Odia meaning of ‘Essential’?",hint:"English → Odia",answer:"ଅତ୍ୟାବଶ୍ୟକ",options:["ସାଧାରଣ","ଅତ୍ୟାବଶ୍ୟକ","ଛୋଟ"],explanation:"Essential = ଅତ୍ୟାବଶ୍ୟକ."}
-];
-const STORAGE_KEY="english-adventure-progress-v1";
-const todayKey=()=>new Date().toLocaleDateString("en-CA");
-const yesterdayKey=()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toLocaleDateString("en-CA");};
-const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0});
-let state=loadState(), currentLesson=null, questionIndex=0, sessionCorrect=0, sessionAnswered=0, sessionHearts=5, selectedAnswer=null, lessonDone=false;
-if(state.lastActive!==todayKey()) state.hearts=5;
-function loadState(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY));return s&&typeof s==="object"?{...freshState(),...s}:freshState();}catch{return freshState();}}
-function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{showToast("Progress could not be saved on this browser.");}}
+"use strict";
+/* ============================================================
+   English Adventure v2
+   Requires data.js (LEVELS, PAIRS, WORDS, TIPS, RANKS, BADGES + helpers)
+   ============================================================ */
+const STORAGE_KEY="english-adventure-progress-v1"; // same key as v1 so old progress is kept
+const HEART_MS=20*60*1000, HEART_COST=30, SPEED_SECONDS=15, DAILY_BONUS=20;
+const $=id=>document.getElementById(id);
+const keyFor=d=>d.toLocaleDateString("en-CA");
+const todayKey=()=>keyFor(new Date());
+const yesterdayKey=()=>{const d=new Date();d.setDate(d.getDate()-1);return keyFor(d);};
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone=x=>JSON.parse(JSON.stringify(x));
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function pick(a,n){return shuffle(a.slice()).slice(0,n);}
+function rand(a){return a[Math.floor(Math.random()*a.length)];}
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replace(/[^a-z0-9' ]+/g," ").replace(/\s+/g," ").trim();}
+
+/* ---------------- State ---------------- */
+const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
+  wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
+  settings:{sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6}});
+function sanitize(m){const f=freshState();
+  ["completed","activeDays","mistakes","wordsSeen","badges"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
+  ["xp","hearts","streak","dailyCompleted","bestAccuracy","totalAnswered","totalCorrect","wordIndex","dailyGoal","heartTime","perfectCount","bestCombo","speedBest","mistakesFixed"].forEach(k=>{if(typeof m[k]!=="number"||!isFinite(m[k]))m[k]=f[k];});
+  m.hearts=Math.max(0,Math.min(5,m.hearts));m.dailyGoal=[1,2,3].includes(m.dailyGoal)?m.dailyGoal:1;
+  if(m.mode!=="odia-en"&&m.mode!=="en-odia")m.mode="odia-en";
+  m.settings={...f.settings,...(m.settings&&typeof m.settings==="object"?m.settings:{})};
+  ["musicVol","sfxVol"].forEach(k=>{const v=+m.settings[k];m.settings[k]=isFinite(v)?Math.max(0,Math.min(1,v)):f.settings[k];});
+  return m;}
+function loadState(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY));if(s&&typeof s==="object")return sanitize({...freshState(),...s});}catch{}return freshState();}
+let state=loadState();
+let session=null,timerId=null,storageWarned=false;
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{if(!storageWarned){storageWarned=true;showToast("Progress could not be saved on this browser.");}}}
+
+/* ---------------- Lessons helpers ---------------- */
 function allLessons(){return LEVELS.flatMap(level=>level.lessons.map(lesson=>({...lesson,levelId:level.id,levelName:level.name,levelIcon:level.icon})));}
 function isUnlocked(lesson){const list=allLessons();const i=list.findIndex(x=>x.id===lesson.id);return i===0||state.completed.includes(list[i-1].id)||state.completed.includes(lesson.id);}
-function markActive(){const today=todayKey();if(state.lastActive!==today){state.streak=state.lastActive===yesterdayKey()?state.streak+1:1;state.lastActive=today;}if(state.dailyDate!==today){state.dailyDate=today;state.dailyCompleted=0;}saveState();}
+function lessonCount(l){return l.auto?l.count:l.questions.length+(l.pairs?1:0);}
+
+/* ---------------- Daily / streak / hearts ---------------- */
+function markActive(){const today=todayKey();
+  if(state.lastActive!==today){state.streak=state.lastActive===yesterdayKey()?state.streak+1:1;state.lastActive=today;}
+  if(state.dailyDate!==today){state.dailyDate=today;state.dailyCompleted=0;}
+  if(!state.activeDays.includes(today)){state.activeDays.push(today);state.activeDays=state.activeDays.slice(-60);}
+  saveState();}
+function newDayChecks(){const today=todayKey();
+  if(state.heartDay!==today){state.hearts=5;state.heartTime=0;state.heartDay=today;}
+  if(state.dailyDate!==today){state.dailyDate=today;state.dailyCompleted=0;}
+  if(state.wordDate!==today){const d=new Date();const n=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);state.wordIndex=n%WORDS.length;state.wordDate=today;}
+  if(state.lastActive&&state.lastActive!==today&&state.lastActive!==yesterdayKey())state.streak=0; // streak broken
+}
+function regenHearts(){
+  if(state.hearts>=5){state.hearts=5;state.heartTime=0;return false;}
+  const now=Date.now();
+  if(!state.heartTime){state.heartTime=now;return false;}
+  const gained=Math.floor((now-state.heartTime)/HEART_MS);
+  if(gained>0){state.hearts=Math.min(5,state.hearts+gained);state.heartTime=state.hearts>=5?0:state.heartTime+gained*HEART_MS;return true;}
+  return false;}
+function loseHeart(){if(state.hearts>=5)state.heartTime=Date.now();state.hearts=Math.max(0,state.hearts-1);}
+function nextHeartText(){if(state.hearts>=5)return "";const left=Math.max(0,HEART_MS-(Date.now()-(state.heartTime||Date.now())));return Math.floor(left/60000)+":"+String(Math.floor(left%60000/1000)).padStart(2,"0");}
+
+/* ---------------- Rank & badges ---------------- */
+function rankInfo(){let idx=0;RANKS.forEach((r,i)=>{if(state.xp>=r.xp)idx=i;});const cur=RANKS[idx],next=RANKS[idx+1];
+  return {idx,cur,next,pct:next?Math.round((state.xp-cur.xp)/(next.xp-cur.xp)*100):100};}
+function checkBadges(){const fresh=[];
+  BADGES.forEach(b=>{if(!state.badges.includes(b.id)&&b.test(state)){state.badges.push(b.id);fresh.push(b);}});
+  if(fresh.length){saveState();sfx("badge");confetti(70);showToast("🏅 Badge unlocked: "+fresh.map(b=>b.name).join(", "));}
+  return fresh;}
+
+/* ---------------- Sound & voice ---------------- */
+let audioCtx=null;
+const SFX={correct:[[660,0,.12],[880,.1,.2]],soft:[[740,0,.1]],wrong:[[200,0,.22,"sawtooth"],[150,.12,.26,"sawtooth"]],click:[[520,0,.05,"triangle"]],
+  win:[[523,0,.14],[659,.12,.14],[784,.24,.14],[1047,.36,.32]],badge:[[784,0,.12],[988,.1,.12],[1175,.2,.12],[1568,.3,.35]],lose:[[330,0,.2],[262,.18,.2],[196,.36,.35]],
+  tick:[[1000,0,.05,"square"]],heart:[[587,0,.1],[784,.09,.1],[988,.18,.22]],flip:[[420,0,.05,"triangle"],[640,.05,.07,"triangle"]],
+  rank:[[392,0,.16],[523,.15,.16],[659,.3,.16],[784,.45,.16],[1047,.6,.5]]};
+function sfx(name){
+  if(!state.settings.sound)return;
+  try{audioCtx=AudioKit.ctx();if(!audioCtx)return;if(audioCtx.state==="suspended")audioCtx.resume();
+    (SFX[name]||[]).forEach(([f,t,d,type])=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t0=audioCtx.currentTime+t;
+      o.type=type||"sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.2*state.settings.sfxVol+.0002,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+d);
+      o.connect(g);g.connect(audioCtx.destination);o.start(t0);o.stop(t0+d+.05);});}catch{}}
+const canSpeak=()=>"speechSynthesis" in window&&"SpeechSynthesisUtterance" in window;
+function speak(text,rate){
+  if(!text)return;if(!canSpeak()){showToast("Voice is not supported on this browser.");return;}
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-IN";u.rate=rate||.85;
+    u.onstart=()=>AudioKit.duck(true);u.onend=u.onerror=()=>AudioKit.duck(false);
+    const vs=speechSynthesis.getVoices();const v=vs.find(x=>x.lang==="en-IN")||vs.find(x=>/^en/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u);}catch{}}
+let gestured=false;
+function applyMusic(){
+  if(gestured&&state.settings.music&&!document.hidden){AudioKit.setVolume(state.settings.musicVol);AudioKit.start();}else AudioKit.stop();
+  renderTopStats();}
+const unlockAudio=()=>{gestured=true;applyMusic();["pointerdown","keydown","touchstart"].forEach(e=>removeEventListener(e,unlockAudio));};
+["pointerdown","keydown","touchstart"].forEach(e=>addEventListener(e,unlockAudio,{passive:true}));
+function confetti(n){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=$("confetti");if(!c)return;const ctx=c.getContext("2d");if(!ctx)return;c.width=innerWidth;c.height=innerHeight;c.classList.remove("hidden");
+  const colors=["#6558e8","#ffad4d","#1eaa77","#ef737e","#4cc2ff"];
+  const ps=Array.from({length:n||90},()=>({x:innerWidth/2+(Math.random()-.5)*140,y:innerHeight*.38,vx:(Math.random()-.5)*10,vy:-Math.random()*10-3,s:5+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:rand(colors)}));
+  let f=0;(function tick(){ctx.clearRect(0,0,c.width,c.height);
+    ps.forEach(p=>{p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);ctx.restore();});
+    if(++f<110)requestAnimationFrame(tick);else{ctx.clearRect(0,0,c.width,c.height);c.classList.add("hidden");}})();}
+
+/* ---------------- Question generators ---------------- */
+let _pool=null;
+function poolList(){if(_pool)return _pool;const m=new Map();
+  LEVELS.forEach(l=>l.lessons.forEach(x=>(x.pairs||[]).forEach(([en,odia])=>{if(!m.has(en))m.set(en,odia);})));
+  WORDS.forEach(w=>{if(!m.has(w.en))m.set(w.en,w.odia);});
+  _pool=[...m].map(([en,odia])=>({en,odia}));return _pool;}
+function distract(p,key,local,n){const out=[],seen=new Set([p[key]]);
+  for(const list of [shuffle(local.slice()),shuffle(poolList().slice())]){for(const x of list){if(out.length>=n)break;if(!seen.has(x[key])){seen.add(x[key]);out.push(x[key]);}}}
+  return out;}
+function vocabMcq(p,dir,local){
+  if(dir==="odia-en")return {type:"mcq",prompt:`What is the English word for ${p.odia}?`,hint:"Odia → English",answer:p.en,options:[p.en,...distract(p,"en",local,2)],explanation:`${p.en} = ${p.odia}.`,say:p.en};
+  return {type:"mcq",prompt:`What is the Odia meaning of '${p.en}'?`,hint:"English → Odia",answer:p.odia,options:[p.odia,...distract(p,"odia",local,2)],explanation:`${p.en} = ${p.odia}.`,say:p.en,preview:true};}
+function vocabListen(p,dir,local){
+  if(dir==="odia-en")return lis(p.en,p.en,[p.en,...distract(p,"en",local,2)],`You heard: ${p.en} (${p.odia}).`);
+  return {type:"listen",prompt:"Listen, then choose the Odia meaning",hint:"Listening practice",say:p.en,answer:p.odia,options:[p.odia,...distract(p,"odia",local,2)],explanation:`${p.en} = ${p.odia}.`};}
+function buildAuto(lesson,dir){
+  const ps=shuffle(lesson.pairs.map(([en,odia])=>({en,odia})));const at=i=>ps[i%ps.length];
+  return [vocabMcq(at(0),dir,ps),vocabMcq(at(1),dir,ps),vocabListen(at(2),dir,ps),vocabMcq(at(3),dir,ps),
+    dir==="odia-en"?typ(`Type the English word for ${at(4).odia}`,"Odia → English",at(4).en,`${at(4).en} = ${at(4).odia}.`):vocabMcq(at(4),dir,ps),
+    mat(pick(lesson.pairs,4))];}
+function buildQuestions(lesson){
+  if(lesson.pairs&&(lesson.auto||state.mode==="en-odia"))return buildAuto(lesson,state.mode);
+  const qs=lesson.questions.map(clone);if(lesson.pairs)qs.push(mat(pick(lesson.pairs,4)));return qs;}
+function quickQuestions(n,mcqOnly){
+  const done=allLessons().filter(l=>state.completed.includes(l.id));const source=done.length?done:allLessons().slice(0,3);const items=[];
+  source.forEach(l=>{const orig=lessonById(l.id);
+    if(!orig.auto)(orig.questions||[]).forEach(x=>items.push(clone(x)));
+    if(orig.pairs){const local=orig.pairs.map(([en,odia])=>({en,odia}));pick(orig.pairs,3).forEach(([en,odia])=>items.push(vocabMcq({en,odia},state.mode,local)));}});
+  let list=shuffle(items);if(mcqOnly)list=list.filter(x=>x.type==="mcq");return list.slice(0,n);}
+function englishText(item){
+  if(item.say)return item.say;const a=String(item.answer||"");
+  if(item.type==="match")return null;
+  if(/[A-Za-z]/.test(a)){
+    if(String(item.prompt).includes("___"))return String(item.prompt).replace(/^[^:_]*:\s*/,"").replace(/_{3,}/,a);
+    return a;}
+  const m=String(item.prompt).match(/'([^']+)'/);return m?m[1]:null;}
+function previewText(item){
+  if(item.type==="listen"||item.preview)return item.say||null;
+  if(!/[A-Za-z]/.test(String(item.answer||""))&&item.type!=="match"){const m=String(item.prompt).match(/'([^']+)'/);return m?m[1]:null;}
+  return null;}
+
+/* ---------------- Mistakes notebook ---------------- */
+const mKey=it=>it.type+"|"+it.prompt+"|"+it.answer;
+function addMistake(item){const c=clone(item);delete c._retry;if(state.mistakes.some(m=>mKey(m)===mKey(c)))return;state.mistakes.push(c);if(state.mistakes.length>40)state.mistakes.shift();}
+function removeMistake(item){const n=state.mistakes.length;state.mistakes=state.mistakes.filter(m=>mKey(m)!==mKey(item));if(state.mistakes.length<n)state.mistakesFixed++;}
+
+/* ---------------- Rendering the home screen ---------------- */
+function greetingLine(){
+  if(!state.completed.length)return "Namaskar! Ready for a new adventure?";
+  if(state.streak>=3)return `🔥 ${state.streak}-day streak! Keep it going!`;
+  const h=new Date().getHours();return (h<12?"Good morning":h<17?"Good afternoon":"Good evening")+"! Ready for another quest?";}
+function weekDots(){let out="";
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const on=state.activeDays.includes(keyFor(d));
+    out+=`<span class="wd${on?" on":""}${i===0?" today":""}"><i>${on?"🔥":""}</i><em>${"SMTWTFS"[d.getDay()]}</em></span>`;}
+  return out;}
+function renderTopStats(){
+  $("top-xp").textContent=state.xp;$("top-hearts").textContent=state.hearts;$("top-streak").textContent=state.streak;
+  const t=nextHeartText();$("top-hearts").parentElement.title=t?"Next heart in "+t:"Hearts remaining";
+  $("sound-btn").textContent=state.settings.sound?"🔔":"🔕";
+  const mb=$("music-btn");mb.classList.toggle("off",!state.settings.music);mb.title=state.settings.music?"Music on":"Music off";}
 function render(){
- document.getElementById("top-xp").textContent=state.xp;
- document.getElementById("top-hearts").textContent=state.hearts;
- document.getElementById("top-streak").textContent=state.streak;
- document.getElementById("stat-xp").textContent=state.xp;
- document.getElementById("stat-streak").textContent=state.streak;
- document.getElementById("stat-lessons").textContent=state.completed.length;
- document.getElementById("stat-accuracy").textContent=state.totalAnswered?Math.round(state.totalCorrect/state.totalAnswered*100)+"%":"—";
- document.getElementById("completed-count").textContent=state.completed.length+" lessons completed";
- document.getElementById("quest-bar").style.width=(state.dailyCompleted?100:0)+"%";
- document.getElementById("quest-label").textContent=(state.dailyCompleted?1:0)+" / 1 lesson today";
- document.getElementById("language-toggle").textContent="Mode: "+(state.mode==="odia-en"?"Odia → English":"English → Odia");
- const path=document.getElementById("learning-path");path.innerHTML="";
- LEVELS.forEach(level=>{
-   const header=document.createElement("div");header.className="level-heading";header.innerHTML=`<div style="margin:16px 0 5px 5px;color:#77758d;font-size:10px;font-weight:900;letter-spacing:1.2px">${level.level} · ${escapeHtml(level.name.toUpperCase())}</div>`;path.appendChild(header);
-   level.lessons.forEach(lesson=>{
-     const done=state.completed.includes(lesson.id),unlocked=isUnlocked(lesson);
-     const unit=document.createElement("div");unit.className="unit"+(done?" completed":"")+(unlocked?"":" locked");
-     unit.innerHTML=`<div class="unit-node">${done?"✓":level.icon}</div><div><p class="unit-title">${escapeHtml(lesson.title)}</p><p class="unit-description">${escapeHtml(lesson.desc)}</p><div class="unit-meta">${lesson.questions.length} questions · ${lesson.xp} XP</div></div><button class="unit-btn" ${unlocked?"":"disabled"}>${done?"Review":unlocked?"Start →":"🔒 Locked"}</button>`;
-     unit.querySelector("button").addEventListener("click",()=>startLesson(level,lesson));path.appendChild(unit);
-   });
- });
- document.getElementById("word-en").textContent=WORDS[state.wordIndex%WORDS.length].en;
- document.getElementById("word-odia").textContent=WORDS[state.wordIndex%WORDS.length].odia;
- document.getElementById("word-example").textContent="Example: "+WORDS[state.wordIndex%WORDS.length].example;
- document.getElementById("robot-message").textContent=state.completed.length?"You're doing great! Ready for another quest?":"Namaskar! Ready for a new adventure?";
+  renderTopStats();
+  $("stat-xp").textContent=state.xp;$("stat-streak").textContent=state.streak;$("stat-lessons").textContent=state.completed.length;
+  $("stat-accuracy").textContent=state.totalAnswered?Math.round(state.totalCorrect/state.totalAnswered*100)+"%":"—";
+  $("completed-count").textContent=state.completed.length+" / "+allLessons().length+" lessons";
+  $("week-dots").innerHTML=weekDots();
+  // daily quest
+  const goal=state.dailyGoal,cnt=Math.min(state.dailyCompleted,goal);
+  $("quest-bar").style.width=Math.round(cnt/goal*100)+"%";$("quest-label").textContent=`${cnt} / ${goal} quest${goal>1?"s":""} today`;
+  $("goal-chips").innerHTML=[[1,"Easy"],[2,"Normal"],[3,"Serious"]].map(([n,l])=>`<button class="chip${goal===n?" active":""}" data-goal="${n}">${l} · ${n}</button>`).join("");
+  $("goal-chips").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{state.dailyGoal=+b.dataset.goal;saveState();render();}));
+  // rank
+  const r=rankInfo();$("rank-emoji").textContent=r.cur.emoji;$("rank-name").textContent=r.cur.name;$("rank-bar").style.width=r.pct+"%";
+  $("rank-label").textContent=r.next?`${state.xp} / ${r.next.xp} XP to ${r.next.name}`:"Top rank reached! 🎉";
+  $("language-toggle").textContent="Mode: "+(state.mode==="odia-en"?"Odia → English":"English → Odia");
+  $("daily-tip").textContent=TIPS[Math.floor(Date.now()/864e5)%TIPS.length];
+  // path
+  const path=$("learning-path");path.innerHTML="";
+  LEVELS.forEach(level=>{
+    path.appendChild(el("div","level-heading",`<div class="level-label">${esc(level.level)} · ${esc(level.name.toUpperCase())}</div>`));
+    level.lessons.forEach(lesson=>{
+      const done=state.completed.includes(lesson.id),unlocked=isUnlocked(lesson);
+      const unit=el("div","unit"+(done?" completed":"")+(unlocked?"":" locked"));
+      unit.innerHTML=`<div class="unit-node">${done?"✓":level.icon}</div><div><p class="unit-title">${esc(lesson.title)}</p><p class="unit-description">${esc(lesson.desc)}</p><div class="unit-meta">${lessonCount(lesson)} questions · ${lesson.xp} XP</div></div><button class="unit-btn" ${unlocked?"":"disabled"}>${done?"Review":unlocked?"Start →":"🔒 Locked"}</button>`;
+      unit.querySelector("button").addEventListener("click",()=>startLesson(level,lesson));path.appendChild(unit);});});
+  // practice
+  $("mistake-count").textContent=state.mistakes.length?state.mistakes.length+" to fix":"All clear!";
+  $("mistakes-btn").classList.toggle("disabled",!state.mistakes.length);
+  // badges
+  $("badge-count").textContent=state.badges.length+" / "+BADGES.length;
+  $("badge-grid").innerHTML=BADGES.map(b=>{const on=state.badges.includes(b.id);return `<div class="badge${on?" on":""}" title="${esc(b.desc)}"><span class="badge-icon">${on?b.icon:"🔒"}</span><b>${esc(b.name)}</b><small>${esc(b.desc)}</small></div>`;}).join("");
+  // word of the day
+  const w=WORDS[state.wordIndex%WORDS.length];$("word-en").textContent=w.en;$("word-odia").textContent=w.odia;$("word-example").textContent="Example: "+w.example;
+  $("robot-message").textContent=greetingLine();
 }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ---------------- Sessions ---------------- */
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
+function syncModalLock(){document.body.classList.toggle("modal-open",!$("lesson-modal").classList.contains("hidden")||!$("sheet-modal").classList.contains("hidden"));}
 function startLesson(level,lesson){
- if(!isUnlocked(lesson)){showToast("Finish the previous lesson to unlock this one.");return;}
- if(state.hearts<=0){showToast("You need more hearts. Hearts refill to 5 when you return tomorrow.");return;}
- currentLesson={...lesson,level};
- if(state.mode==="en-odia") currentLesson.questions=REVERSE_BANK.slice((LEVELS.flatMap(l=>l.lessons).findIndex(x=>x.id===lesson.id)*2)%REVERSE_BANK.length).concat(REVERSE_BANK).slice(0,lesson.questions.length);
- questionIndex=0;sessionCorrect=0;sessionAnswered=0;sessionHearts=state.hearts;selectedAnswer=null;lessonDone=false;
- document.getElementById("lesson-modal").classList.remove("hidden");renderQuestion();
-}
+  if(!isUnlocked(lesson)){showToast("Finish the previous lesson to unlock this one.");return;}
+  if(state.mode==="en-odia"&&!lesson.pairs)showToast("Grammar lessons stay the same in this mode.");
+  startSession({kind:"lesson",title:lesson.title,icon:level.icon,kicker:level.level+" QUEST",questions:buildQuestions(lesson),lesson,level,restart:()=>startLesson(level,lesson)});}
+function startQuick(){const qs=quickQuestions(8,false);if(!qs.length){showToast("Not enough questions yet.");return;}
+  startSession({kind:"quick",title:"Quick Practice",icon:"⚡",kicker:"PRACTICE",questions:qs,restart:startQuick});}
+function startSpeed(){const qs=quickQuestions(8,true);if(qs.length<4){showToast("Complete a lesson first to unlock Speed Round.");return;}
+  startSession({kind:"speed",title:"Speed Round",icon:"⏱️",kicker:"SPEED ROUND",questions:qs,timed:true,restart:startSpeed});}
+function startMistakes(){if(!state.mistakes.length){showToast("No mistakes to fix. Great job! 🎉");return;}
+  startSession({kind:"mistakes",title:"Fix My Mistakes",icon:"🛠️",kicker:"MISTAKES",questions:shuffle(state.mistakes.map(clone)).slice(0,8),restart:startMistakes});}
+function startSession(o){
+  stopTimer();
+  if(o.kind==="lesson"){regenHearts();if(state.hearts<=0){showNoHearts(null,o);return;}}
+  session={...o,queue:o.questions.slice(),idx:0,total:o.questions.length,correct:0,answered:false,combo:0,bestCombo:0,xpGained:0,done:false,practice:o.kind!=="lesson",selected:null};
+  $("lesson-modal").classList.remove("hidden");syncModalLock();renderQuestion();}
+function heartsUI(){const v=session&&session.practice?"∞":state.hearts;$("lesson-hearts").textContent=v;$("top-hearts").textContent=state.hearts;}
+function coach(kind){return rand(kind==="good"?["Great job!","Super!","Well done!","Excellent!","You're on fire!","Perfect!"]:kind==="bad"?["No worries, we'll fix it!","Mistakes help us learn.","Almost! Try again later.","Keep going, you can do it!"]:["Take your time!","You can do this!","Think, then tap.","Read carefully.","Say it in your head first."]);}
+const INSTR={mcq:"Choose the best answer.",listen:"Tap 🔊 to listen, then choose.",type:"Type your answer below.",arrange:"Tap the words to build the sentence.",match:"Tap one item on each side to match them."};
 function renderQuestion(){
- const screen=document.getElementById("lesson-screen");
- document.getElementById("lesson-hearts").textContent=sessionHearts;
- document.getElementById("lesson-progress-bar").style.width=(questionIndex/currentLesson.questions.length*100)+"%";
- const item=currentLesson.questions[questionIndex];selectedAnswer=null;
- const prompt=item.prompt;
- const hint=item.hint;
- const choices=item.options;
- screen.innerHTML=`<div class="lesson-content"><p class="lesson-kicker">${escapeHtml(currentLesson.level.level)} QUEST · QUESTION ${questionIndex+1}/${currentLesson.questions.length}</p><h2>${escapeHtml(currentLesson.title)}</h2><p class="lesson-instruction">Choose the best answer. Take your time!</p><div class="question-card"><div class="question-emoji">${currentLesson.level.icon}</div><p class="question-prompt">${escapeHtml(prompt)}</p><p class="question-hint">${escapeHtml(hint)}</p></div><div class="answer-list" id="answer-list"></div><div id="feedback"></div><div class="lesson-bottom"><span class="muted">Correct answer earns XP ⭐</span><button class="primary-btn" id="check-btn" disabled>Check answer</button></div></div>`;
- const list=document.getElementById("answer-list");
- choices.forEach((choice,i)=>{const b=document.createElement("button");b.className="answer-option";b.textContent=choice;b.addEventListener("click",()=>selectAnswer(b,choice));list.appendChild(b);});
- document.getElementById("check-btn").addEventListener("click",checkAnswer);
-}
-function makeReversePrompt(item){const m=item.prompt.match(/(?:for|of) '([^']+)'/i);if(m)return `What is the Odia meaning of “${m[1]}”?`;const match=item.prompt.match(/(?:means|meaning of) '([^']+)'/i);if(match)return `What is the Odia meaning of “${match[1]}”?`;return "Choose the best answer for this English practice question.";}
-function reverseOptions(item){if(item.prompt.includes("ଜଳ"))return ["ଜଳ","ଅଗ୍ନି","ବାୟୁ"];if(item.prompt.includes("ବହି"))return ["ବ୍ୟାଗ","ବହି","ଦ୍ୱାର"];if(item.answer==="Hello")return ["ନମସ୍କାର","ବିଦାୟ","ଧନ୍ୟବାଦ"];if(item.answer==="Thank you")return ["ଦୟାକରି","ଧନ୍ୟବାଦ","ଶୁଭରାତ୍ରି"];return item.options;}
-function selectAnswer(button,choice){if(lessonDone)return;document.querySelectorAll(".answer-option").forEach(b=>b.classList.remove("selected"));button.classList.add("selected");selectedAnswer=choice;document.getElementById("check-btn").disabled=false;}
-function checkAnswer(){
- if(selectedAnswer===null||lessonDone)return;
- const item=currentLesson.questions[questionIndex],buttons=[...document.querySelectorAll(".answer-option")],feedback=document.getElementById("feedback");
- sessionAnswered++;state.totalAnswered++;
- const correct=selectedAnswer===item.answer;
- if(correct){sessionCorrect++;state.totalCorrect++;state.xp+=5;buttons.forEach(b=>{if(b.textContent===item.answer)b.classList.add("correct");});feedback.className="feedback good";feedback.textContent="Correct! +5 XP. "+item.explanation;}
- else{sessionHearts=Math.max(0,sessionHearts-1);state.hearts=Math.max(0,state.hearts-1);buttons.forEach(b=>{if(b.textContent===selectedAnswer)b.classList.add("wrong");if(b.textContent===item.answer)b.classList.add("correct");});feedback.className="feedback bad";feedback.textContent="Not quite. Correct answer: "+item.answer+". "+item.explanation;}
- buttons.forEach(b=>b.disabled=true);document.getElementById("lesson-hearts").textContent=sessionHearts;document.getElementById("top-hearts").textContent=state.hearts;
- const check=document.getElementById("check-btn");check.disabled=false;check.textContent=questionIndex===currentLesson.questions.length-1?"Finish lesson →":"Continue →";check.onclick=advanceQuestion;
- state.bestAccuracy=Math.max(state.bestAccuracy,Math.round(sessionCorrect/sessionAnswered*100));saveState();renderStatsOnly();
-}
-function advanceQuestion(){if(questionIndex<currentLesson.questions.length-1){questionIndex++;renderQuestion();}else finishLesson();}
-function renderStatsOnly(){document.getElementById("top-xp").textContent=state.xp;document.getElementById("stat-xp").textContent=state.xp;document.getElementById("stat-accuracy").textContent=state.totalAnswered?Math.round(state.totalCorrect/state.totalAnswered*100)+"%":"—";}
-function finishLesson(){
- const perfect=sessionCorrect===currentLesson.questions.length,passed=sessionCorrect>=Math.ceil(currentLesson.questions.length*.5);
- if(passed&&!state.completed.includes(currentLesson.id)){state.completed.push(currentLesson.id);state.xp+=currentLesson.xp;markActive();state.dailyCompleted=1;state.hearts=Math.max(0,Math.min(5,state.hearts+1));}
- else if(passed){state.xp+=Math.round(currentLesson.xp*.25);markActive();state.dailyCompleted=1;}
- saveState();render();
- const screen=document.getElementById("lesson-screen");document.getElementById("lesson-progress-bar").style.width="100%";
- screen.innerHTML=`<div class="lesson-result"><div class="result-emoji">${passed?(perfect?"🏆":"🎉"):"💪"}</div><p class="lesson-kicker">QUEST ${passed?"COMPLETE":"PRACTICE ROUND"}</p><h2>${passed?"Amazing work!":"Keep practising!"}</h2><p class="muted">${passed?"You made progress on your English adventure.":"You need at least half the answers correct to complete this lesson. Try again when you're ready."}</p><div class="result-score">⭐ +${passed?(state.completed.includes(currentLesson.id)?currentLesson.xp:Math.round(currentLesson.xp*.25)):0} bonus XP</div><p class="muted">${sessionCorrect} of ${currentLesson.questions.length} correct · "+Math.round(sessionCorrect/currentLesson.questions.length*100)+"% accuracy</p><div class="result-actions"><button class="primary-btn" id="result-home">Back to map</button><button class="secondary-btn" id="result-retry">Try again</button></div></div>`;
- // Fix percentage display safely without building dynamic HTML from user input.
- screen.querySelector(".lesson-result .muted:nth-of-type(2)").textContent=`${sessionCorrect} of ${currentLesson.questions.length} correct · ${Math.round(sessionCorrect/currentLesson.questions.length*100)}% accuracy`;
- document.getElementById("result-home").addEventListener("click",closeLesson);
- document.getElementById("result-retry").addEventListener("click",()=>startLesson(currentLesson.level,currentLesson));
- lessonDone=true;
-}
-function closeLesson(){document.getElementById("lesson-modal").classList.add("hidden");currentLesson=null;render();}
-function showToast(message){const t=document.getElementById("toast");t.textContent=message;t.classList.remove("hidden");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.add("hidden"),2600);}
-document.getElementById("close-lesson").addEventListener("click",closeLesson);
-document.getElementById("lesson-modal").addEventListener("click",e=>{if(e.target.id==="lesson-modal")closeLesson();});
-document.getElementById("language-toggle").addEventListener("click",()=>{state.mode=state.mode==="odia-en"?"en-odia":"odia-en";saveState();render();showToast(state.mode==="odia-en"?"Odia → English mode selected":"English → Odia mode selected");});
-document.getElementById("continue-btn").addEventListener("click",()=>{const list=allLessons();const next=list.find(l=>!state.completed.includes(l.id)&&isUnlocked(l));if(!next){showToast("All lessons completed! Review any lesson to keep practising.");return;}const level=LEVELS.find(x=>x.id===next.levelId);startLesson(level,level.lessons.find(x=>x.id===next.id));});
-document.getElementById("new-word").addEventListener("click",()=>{state.wordIndex=(state.wordIndex+1)%WORDS.length;saveState();render();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeLesson();});
-if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
-render();
+  const s=session;stopTimer();const item=s.queue[s.idx];s.item=item;s.answered=false;s.selected=null;s.arranged=[];
+  heartsUI();$("lesson-progress-bar").style.width=(s.idx/s.queue.length*100)+"%";
+  const retry=item._retry,pre=previewText(item);
+  const speakBtn=item.type==="listen"?`<div class="listen-row"><button class="speak-btn big" id="speak-q" aria-label="Play audio">🔊</button><button class="speak-btn" id="speak-slow" aria-label="Play slowly">🐢</button></div>`:pre?`<button class="speak-btn" id="speak-q" aria-label="Hear it">🔊</button>`:"";
+  $("lesson-screen").innerHTML=`<div class="lesson-content"><p class="lesson-kicker">${esc(s.kicker)} · ${retry?"REVIEW":"QUESTION "+(s.idx+1)+"/"+s.queue.length}</p><h2>${esc(s.title)}</h2>
+    <p class="coach"><span class="coach-bot">🤖</span><span id="coach-line">${esc(retry?"Let's try this one again!":coach())}</span></p>
+    ${s.timed?`<div class="timer"><i id="timer-bar"></i></div>`:""}
+    <div class="question-card"><div class="question-emoji">${s.icon}</div><p class="question-prompt">${esc(item.prompt)}</p><p class="question-hint">${esc(item.hint||"")}</p>${speakBtn}</div>
+    <p class="lesson-instruction">${INSTR[item.type]||INSTR.mcq}</p><div class="answer-area" id="answer-area"></div><div id="feedback" aria-live="polite"></div>
+    <div class="lesson-bottom"><span class="combo" id="combo-pill">${s.combo>=2?"🔥 Combo ×"+s.combo:"Correct answer earns XP ⭐"}</span><button class="primary-btn" id="check-btn" disabled>${item.type==="match"?"Match all pairs":"Check answer"}</button></div></div>`;
+  const sq=$("speak-q");if(sq)sq.addEventListener("click",()=>speak(pre||item.say));const ss=$("speak-slow");if(ss)ss.addEventListener("click",()=>speak(item.say,.5));
+  if(item.type==="listen"&&state.settings.autoRead)setTimeout(()=>{if(session===s&&s.item===item&&!s.answered)speak(item.say);},350);
+  $("check-btn").addEventListener("click",onPrimary);
+  if(item.type==="mcq"||item.type==="listen")buildChoices(item);
+  else if(item.type==="type")buildTyping();
+  else if(item.type==="arrange")buildArrange(item);
+  else if(item.type==="match")buildMatch(item);
+  if(s.timed)startTimer();}
+function buildChoices(item){const list=$("answer-area");list.className="answer-list";
+  shuffle(item.options.slice()).forEach((choice,i)=>{const b=el("button","answer-option");b.dataset.value=choice;b.innerHTML=`<span class="key">${i+1}</span><span>${esc(choice)}</span>`;
+    b.addEventListener("click",()=>selectAnswer(b,choice));list.appendChild(b);});}
+function selectAnswer(button,choice){const s=session;if(s.answered)return;sfx("click");
+  document.querySelectorAll(".answer-option").forEach(b=>b.classList.remove("selected"));button.classList.add("selected");s.selected=choice;$("check-btn").disabled=false;}
+function buildTyping(){const a=$("answer-area");a.innerHTML=`<input id="type-input" class="type-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type in English…" aria-label="Your answer">`;
+  const inp=$("type-input");inp.addEventListener("input",()=>{$("check-btn").disabled=!inp.value.trim()&&!session.answered;});
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();onPrimary();}});setTimeout(()=>{try{inp.focus();}catch{}},60);}
+function buildArrange(item){const s=session;
+  const words=item.answer.split(/\s+/),all=words.concat(item.extra||[]);s.tokens=all;
+  const ids=all.map((_,i)=>i);
+  for(let k=0;k<20;k++){shuffle(ids);if(!ids.filter(i=>i<words.length).every((v,i)=>v===i))break;} // never show the answer already in order
+  s.bank=ids;
+  $("answer-area").innerHTML=`<div class="arrange-zone empty" id="arr-zone" aria-label="Your sentence"></div><div class="word-bank" id="arr-bank"></div>`;drawArrange();}
+function drawArrange(){const s=session,zone=$("arr-zone"),bank=$("arr-bank");if(!zone)return;zone.innerHTML="";bank.innerHTML="";zone.classList.toggle("empty",!s.arranged.length);
+  const tile=id=>{const b=el("button","word-tile");b.textContent=s.tokens[id];return b;};
+  s.arranged.forEach(id=>{const b=tile(id);b.addEventListener("click",()=>{if(s.answered)return;s.arranged=s.arranged.filter(x=>x!==id);sfx("click");drawArrange();});zone.appendChild(b);});
+  s.bank.forEach(id=>{const b=tile(id);if(s.arranged.includes(id)){b.classList.add("used");b.disabled=true;}else b.addEventListener("click",()=>{if(s.answered)return;s.arranged.push(id);sfx("click");drawArrange();});bank.appendChild(b);});
+  if(!s.answered)$("check-btn").disabled=!s.arranged.length;}
+function buildMatch(item){const s=session;s.matched=new Set();s.msel=null;s.mm=0;
+  $("answer-area").innerHTML=`<div class="match-grid"><div class="match-col" id="m-left"></div><div class="match-col" id="m-right"></div></div>`;
+  const mk=(i,t,side)=>{const b=el("button","match-tile");b.textContent=t;b.dataset.i=i;b.dataset.side=side;b.addEventListener("click",()=>matchClick(b));return b;};
+  shuffle(item.pairs.map((p,i)=>[i,p[0]])).forEach(([i,t])=>$("m-left").appendChild(mk(i,t,"L")));
+  shuffle(item.pairs.map((p,i)=>[i,p[1]])).forEach(([i,t])=>$("m-right").appendChild(mk(i,t,"R")));}
+function matchClick(b){const s=session;if(s.answered||b.classList.contains("matched"))return;
+  if(b.dataset.side==="L"&&state.settings.autoRead)speak(b.textContent);
+  if(!s.msel){s.msel=b;b.classList.add("sel");sfx("click");return;}
+  if(s.msel===b){b.classList.remove("sel");s.msel=null;return;}
+  if(s.msel.dataset.side===b.dataset.side){s.msel.classList.remove("sel");s.msel=b;b.classList.add("sel");sfx("click");return;}
+  const a=s.msel;s.msel=null;a.classList.remove("sel");
+  if(a.dataset.i===b.dataset.i){[a,b].forEach(x=>{x.classList.add("matched");x.disabled=true;});sfx("soft");s.matched.add(a.dataset.i);
+    if(s.matched.size===s.item.pairs.length)resolve(s.mm===0,s.item.answer,null,{skipHeart:true});}
+  else{s.mm++;sfx("wrong");if(s.kind==="lesson"){loseHeart();saveState();heartsUI();}[a,b].forEach(x=>x.classList.add("wrong"));setTimeout(()=>[a,b].forEach(x=>x.classList.remove("wrong")),450);}}
+function startTimer(){const s=session,item=s.item,t0=Date.now(),bar=$("timer-bar");
+  let lastSec=-1;
+  timerId=setInterval(()=>{const left=SPEED_SECONDS*1000-(Date.now()-t0);const sec=Math.ceil(left/1000);if(left>0&&left<=3000&&sec!==lastSec){lastSec=sec;sfx("tick");}if(bar){bar.style.width=Math.max(0,left/(SPEED_SECONDS*10))+"%";if(left<4000)bar.classList.add("urgent");}
+    if(left<=0){stopTimer();if(session===s&&s.item===item&&!s.answered)resolve(false,item.answer,null,{timeUp:true,skipHeart:true});}},100);}
+function onPrimary(){const s=session;if(!s||s.done)return;
+  if(s.answered){advance();return;}
+  const item=s.item;
+  if(item.type==="mcq"||item.type==="listen"){if(s.selected==null)return;resolve(s.selected===item.answer,item.answer,s.selected);}
+  else if(item.type==="type"){const v=$("type-input").value;if(!v.trim())return;resolve(norm(v)===norm(item.answer),item.answer,v);}
+  else if(item.type==="arrange"){if(!s.arranged.length)return;const user=s.arranged.map(i=>s.tokens[i]).join(" ");resolve(norm(user)===norm(item.answer),item.answer,user);}}
+function resolve(correct,correctText,userAnswer,opts){
+  opts=opts||{};const s=session;if(!s||s.answered)return;const item=s.item;s.answered=true;stopTimer();
+  const retry=!!item._retry;let gain=0;
+  if(!retry)state.totalAnswered++;
+  if(correct){sfx("correct");
+    if(!retry){s.correct++;state.totalCorrect++;s.combo++;s.bestCombo=Math.max(s.bestCombo,s.combo);state.bestCombo=Math.max(state.bestCombo,s.combo);
+      const base=s.kind==="lesson"?5:s.kind==="speed"?3:2,bonus=s.kind==="lesson"&&s.combo>=3?Math.min(s.combo-2,3):0;gain=base+bonus;state.xp+=gain;s.xpGained+=gain;}
+    if(s.kind==="mistakes")removeMistake(item);
+  }else{sfx("wrong");s.combo=0;
+    if(!opts.skipHeart&&s.kind==="lesson")loseHeart();
+    if(s.kind!=="mistakes"&&!retry)addMistake(item);
+    if(!retry&&s.kind!=="speed")s.queue.push({...clone(item),_retry:true});}
+  // mark UI
+  document.querySelectorAll(".answer-option").forEach(b=>{b.disabled=true;if(b.dataset.value===item.answer)b.classList.add("correct");else if(b.dataset.value===s.selected)b.classList.add("wrong");});
+  const inp=$("type-input");if(inp){inp.disabled=true;inp.classList.add(correct?"ok":"bad");}
+  const zone=$("arr-zone");if(zone){zone.classList.add(correct?"ok":"bad");document.querySelectorAll(".word-tile").forEach(b=>b.disabled=true);}
+  const speakText=item.type==="listen"?null:englishText(item);
+  const fb=$("feedback");fb.className="feedback "+(correct?"good":"bad");
+  const head=correct?(item.type==="match"?"Perfect matching!":coach("good"))+(gain?` +${gain} XP`:""):opts.timeUp?"Time's up!":item.type==="match"?"Some pairs were wrong.":"Not quite.";
+  const showAns=!correct&&item.type!=="match";
+  const again=!correct&&!retry&&s.kind!=="speed"?" We'll ask this again at the end.":"";
+  fb.innerHTML=`<b>${esc(head)}</b> ${showAns?"Correct answer: <b>"+esc(correctText)+"</b>. ":""}${esc(item.explanation||"")}${esc(again)} ${speakText?'<button class="speak-btn small" id="speak-fb">🔊 Hear it</button>':""}`;
+  const sf=$("speak-fb");if(sf)sf.addEventListener("click",()=>speak(speakText));
+  if(speakText&&state.settings.autoRead&&state.settings.sound)setTimeout(()=>speak(speakText),250);
+  $("coach-line").textContent=correct?coach("good"):coach("bad");
+  $("combo-pill").textContent=s.combo>=2?"🔥 Combo ×"+s.combo:s.kind==="lesson"?"Keep going!":"";
+  const last=s.idx>=s.queue.length-1;const cb=$("check-btn");cb.disabled=false;cb.textContent=last?"Finish →":"Continue →";cb.focus();
+  heartsUI();saveState();renderTopStats();}
+function advance(){const s=session;
+  const next=()=>{s.idx++;if(s.idx>=s.queue.length)finishSession();else renderQuestion();};
+  if(s.kind==="lesson"&&state.hearts<=0&&s.idx<s.queue.length-1){showNoHearts(next,null);return;}
+  next();}
+function showNoHearts(resume,startOpts){
+  stopTimer();sfx("lose");$("lesson-modal").classList.remove("hidden");syncModalLock();$("lesson-hearts").textContent=0;
+  $("lesson-progress-bar").style.width=session&&!startOpts?(session.idx/session.queue.length*100)+"%":"0%";
+  $("lesson-screen").innerHTML=`<div class="lesson-result"><div class="result-emoji">💔</div><p class="lesson-kicker">OUT OF HEARTS</p><h2>Take a short break</h2>
+    <p class="muted">A new heart arrives every 20 minutes (next one in <b id="heart-timer">${nextHeartText()}</b>). You can also refill a heart with XP, or practise without hearts.</p>
+    <div class="result-actions"><button class="primary-btn" id="nh-buy" ${state.xp>=HEART_COST?"":"disabled"}>❤️ Refill 1 heart · ${HEART_COST} XP</button><button class="secondary-btn" id="nh-practice">⚡ Practice instead</button><button class="secondary-btn" id="nh-home">Back to map</button></div></div>`;
+  $("nh-buy").addEventListener("click",()=>{if(state.xp<HEART_COST)return;state.xp-=HEART_COST;if(state.hearts>=5)state.heartTime=0;else if(!state.heartTime)state.heartTime=Date.now();state.hearts=Math.min(5,state.hearts+1);saveState();renderTopStats();sfx("heart");
+    if(resume){heartsUI();resume();}else if(startOpts)startSession(startOpts);});
+  $("nh-practice").addEventListener("click",()=>{closeLesson(true);startQuick();});
+  $("nh-home").addEventListener("click",()=>closeLesson(true));}
+function finishSession(){
+  const s=session;s.done=true;stopTimer();
+  const total=s.total,correct=s.correct,acc=total?Math.round(correct/total*100):0;
+  const passed=s.kind==="speed"?correct>=1:correct>=Math.ceil(total*.5),perfect=total>0&&correct===total;
+  const prevRank=rankInfo().idx;let bonus=0,dailyMsg="";
+  if(passed){
+    if(s.kind==="lesson"){const first=!state.completed.includes(s.lesson.id);
+      if(first){state.completed.push(s.lesson.id);bonus+=s.lesson.xp;state.hearts=Math.min(5,state.hearts+1);if(state.hearts>=5)state.heartTime=0;}else bonus+=Math.round(s.lesson.xp*.25);
+      if(perfect){bonus+=10;state.perfectCount++;}}
+    else bonus+=s.kind==="speed"?5:3;
+    markActive();state.dailyCompleted++;
+    if(state.dailyCompleted>=state.dailyGoal&&state.dailyBonusDate!==todayKey()){state.dailyBonusDate=todayKey();bonus+=DAILY_BONUS;dailyMsg=`🎯 Daily goal reached! +${DAILY_BONUS} XP`;}
+    state.xp+=bonus;}
+  if(s.kind==="speed")state.speedBest=Math.max(state.speedBest,correct);
+  if(total>=4)state.bestAccuracy=Math.max(state.bestAccuracy,acc);
+  saveState();const fresh=checkBadges();const rank=rankInfo();const ranked=rank.idx>prevRank;
+  if(passed){sfx(ranked?"rank":"win");confetti(perfect?150:90);}else sfx("lose");
+  render();
+  const earned=s.xpGained+bonus;
+  const next=(()=>{if(s.kind!=="lesson"||!passed)return null;const list=allLessons();const i=list.findIndex(l=>l.id===s.lesson.id);const n=list[i+1];return n&&isUnlocked(n)?n:null;})();
+  $("lesson-progress-bar").style.width="100%";heartsUI();
+  const title=s.kind==="speed"?(passed?"Speed Round done!":"Time ran out"):passed?(perfect?"Perfect score!":"Amazing work!"):"Keep practising!";
+  const sub=passed?(s.kind==="lesson"?"You made progress on your English adventure.":"Great practice session!"):"You need at least half the answers correct to complete this lesson. Try again when you're ready.";
+  $("lesson-screen").innerHTML=`<div class="lesson-result"><div class="result-emoji">${passed?(perfect?"🏆":"🎉"):"💪"}</div><p class="lesson-kicker">${passed?(s.kind==="lesson"?"QUEST COMPLETE":"SESSION COMPLETE"):"PRACTICE ROUND"}</p><h2>${esc(title)}</h2><p class="muted">${esc(sub)}</p>
+    <div class="result-stats"><div><b>⭐ +${earned}</b><span>XP earned</span></div><div><b>🎯 ${acc}%</b><span>${correct} of ${total} correct</span></div><div><b>⚡ ×${s.bestCombo}</b><span>Best combo</span></div></div>
+    ${ranked?`<div class="banner rank">${rank.cur.emoji} Rank up! You are now a <b>${esc(rank.cur.name)}</b></div>`:""}${dailyMsg?`<div class="banner goal">${dailyMsg}</div>`:""}
+    ${fresh.map(b=>`<div class="banner badge-up">${b.icon} Badge unlocked: <b>${esc(b.name)}</b></div>`).join("")}
+    <div class="result-actions">${next?`<button class="primary-btn" id="result-next">Next lesson →</button>`:""}<button class="${next?"secondary-btn":"primary-btn"}" id="result-home">Back to map</button><button class="secondary-btn" id="result-retry">Try again</button></div></div>`;
+  $("result-home").addEventListener("click",()=>closeLesson(true));
+  $("result-retry").addEventListener("click",()=>{const r=s.restart;closeLesson(true);if(r)r();});
+  const rn=$("result-next");if(rn)rn.addEventListener("click",()=>{const lv=levelById(next.levelId),ls=lessonById(next.id);closeLesson(true);startLesson(lv,ls);});}
+function closeLesson(force){
+  if(!force&&session&&!session.done&&session.idx>0&&!confirm("Quit this lesson? You will lose your progress in it."))return;
+  stopTimer();try{if(canSpeak())speechSynthesis.cancel();}catch{}
+  session=null;$("lesson-modal").classList.add("hidden");syncModalLock();render();}
+
+/* ---------------- Sheet modal: flashcards & settings ---------------- */
+function openSheet(title,html){$("sheet-title").textContent=title;$("sheet-body").innerHTML=html;$("sheet-modal").classList.remove("hidden");syncModalLock();}
+function closeSheet(){$("sheet-modal").classList.add("hidden");syncModalLock();try{if(canSpeak())speechSynthesis.cancel();}catch{}render();}
+function openFlashcards(){
+  const deck=shuffle(WORDS.slice());let i=0,flipped=false;
+  openSheet("Flashcards",`<p class="muted center">Tap the card to flip it. Say the word aloud!</p>
+    <button class="flashcard" id="fc-card" aria-live="polite"><span class="fc-front"><small>ENGLISH</small><b id="fc-en"></b></span><span class="fc-back"><small>ODIA</small><b id="fc-odia"></b><em id="fc-ex"></em></span></button>
+    <p class="muted center" id="fc-count"></p>
+    <div class="result-actions"><button class="secondary-btn" id="fc-prev">‹ Prev</button><button class="secondary-btn" id="fc-say">🔊 Hear it</button><button class="primary-btn" id="fc-next">Next ›</button></div>`);
+  const draw=()=>{const w=deck[i];$("fc-en").textContent=w.en;$("fc-odia").textContent=w.odia;$("fc-ex").textContent=w.example;$("fc-card").classList.toggle("flipped",flipped);$("fc-count").textContent=`Card ${i+1} of ${deck.length} · ${state.wordsSeen.length} words studied`;};
+  const flip=()=>{flipped=!flipped;if(flipped&&!state.wordsSeen.includes(deck[i].en)){state.wordsSeen.push(deck[i].en);saveState();checkBadges();}sfx("flip");draw();};
+  const go=d=>{i=(i+d+deck.length)%deck.length;flipped=false;draw();if(state.settings.autoRead)speak(deck[i].en);};
+  $("fc-card").addEventListener("click",flip);$("fc-next").addEventListener("click",()=>go(1));$("fc-prev").addEventListener("click",()=>go(-1));$("fc-say").addEventListener("click",()=>speak(flipped?deck[i].example:deck[i].en));draw();}
+const b64e=s=>{let bin="";new TextEncoder().encode(s).forEach(b=>bin+=String.fromCharCode(b));return btoa(bin);};
+const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)));
+function applyTheme(){const t=state.settings.theme;const dark=t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme=dark?"dark":"light";const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=dark?"#1b1933":"#6558e8";
+  const tb=$("theme-btn");if(tb)tb.textContent=dark?"☀️":"🌙";}
+function openSettings(){
+  const sw=(id,label,on)=>`<label class="switch-row"><span>${label}</span><input type="checkbox" id="${id}" ${on?"checked":""}><i class="switch"></i></label>`;
+  openSheet("Settings",`${sw("set-music","Soft background music",state.settings.music)}
+    <label class="slider-row"><span>Music volume</span><input type="range" id="set-mvol" min="0" max="100" value="${Math.round(state.settings.musicVol*100)}"></label>
+    ${sw("set-sound","Sound effects",state.settings.sound)}
+    <label class="slider-row"><span>Effects volume</span><input type="range" id="set-svol" min="0" max="100" value="${Math.round(state.settings.sfxVol*100)}"></label>
+    ${sw("set-read","Read answers aloud",state.settings.autoRead)}
+    <p class="eyebrow settings-label">THEME</p><div class="chips" id="theme-chips">${[["auto","Auto"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<button class="chip${state.settings.theme===v?" active":""}" data-theme="${v}">${l}</button>`).join("")}</div>
+    <p class="eyebrow settings-label">BACKUP & TRANSFER</p><p class="muted">Copy this code to keep your progress safe or move it to another device. Paste a code and tap Restore to load it.</p>
+    <textarea id="backup-code" class="backup" rows="3" spellcheck="false" aria-label="Backup code">${esc(b64e(JSON.stringify(state)))}</textarea>
+    <div class="result-actions left"><button class="secondary-btn" id="copy-backup">Copy code</button><button class="secondary-btn" id="restore-backup">Restore from code</button></div>
+    <p class="eyebrow settings-label">DANGER ZONE</p><button class="secondary-btn danger" id="reset-progress">Reset all progress</button><p class="muted version">English Adventure v2.0</p>`);
+  $("set-sound").addEventListener("change",e=>{state.settings.sound=e.target.checked;saveState();renderTopStats();if(e.target.checked)sfx("correct");});
+  $("set-read").addEventListener("change",e=>{state.settings.autoRead=e.target.checked;saveState();});
+  $("set-music").addEventListener("change",e=>{state.settings.music=e.target.checked;gestured=true;saveState();applyMusic();});
+  $("set-mvol").addEventListener("input",e=>{state.settings.musicVol=e.target.value/100;gestured=true;if(state.settings.music)applyMusic();});
+  $("set-mvol").addEventListener("change",saveState);
+  $("set-svol").addEventListener("input",e=>{state.settings.sfxVol=e.target.value/100;});
+  $("set-svol").addEventListener("change",()=>{saveState();sfx("correct");});
+  document.querySelectorAll("#theme-chips .chip").forEach(b=>b.addEventListener("click",()=>{state.settings.theme=b.dataset.theme;saveState();applyTheme();document.querySelectorAll("#theme-chips .chip").forEach(x=>x.classList.toggle("active",x===b));}));
+  $("copy-backup").addEventListener("click",async()=>{const t=$("backup-code");try{await navigator.clipboard.writeText(t.value);showToast("Backup code copied!");}catch{t.select();showToast("Select and copy the code.");}});
+  $("restore-backup").addEventListener("click",()=>{try{const obj=JSON.parse(b64d($("backup-code").value.trim()));if(!obj||typeof obj!=="object"||typeof obj.xp!=="number")throw new Error("bad");
+    state=sanitize({...freshState(),...obj});saveState();applyTheme();newDayChecks();saveState();closeSheet();showToast("Progress restored! ✅");}catch{showToast("That code is not valid.");}});
+  $("reset-progress").addEventListener("click",()=>{if(confirm("Reset ALL progress? This cannot be undone.")){state=freshState();newDayChecks();saveState();applyTheme();closeSheet();showToast("Progress reset.");}});}
+
+/* ---------------- Toast & events ---------------- */
+function showToast(message){const t=$("toast");t.textContent=message;t.classList.remove("hidden");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.add("hidden"),2800);}
+$("close-lesson").addEventListener("click",()=>closeLesson());
+$("lesson-modal").addEventListener("click",e=>{if(e.target.id==="lesson-modal")closeLesson();});
+$("close-sheet").addEventListener("click",closeSheet);
+$("sheet-modal").addEventListener("click",e=>{if(e.target.id==="sheet-modal")closeSheet();});
+$("language-toggle").addEventListener("click",()=>{state.mode=state.mode==="odia-en"?"en-odia":"odia-en";saveState();render();showToast(state.mode==="odia-en"?"Odia → English mode selected":"English → Odia mode selected");});
+$("continue-btn").addEventListener("click",()=>{const next=allLessons().find(l=>!state.completed.includes(l.id)&&isUnlocked(l));
+  if(!next){showToast("All lessons completed! Enjoy some practice.");startQuick();return;}startLesson(levelById(next.levelId),lessonById(next.id));});
+$("new-word").addEventListener("click",()=>{state.wordIndex=(state.wordIndex+1)%WORDS.length;saveState();render();});
+$("speak-word").addEventListener("click",()=>{const w=WORDS[state.wordIndex%WORDS.length];speak(w.en+". "+w.example);});
+$("quick-btn").addEventListener("click",startQuick);$("speed-btn").addEventListener("click",startSpeed);
+$("cards-btn").addEventListener("click",openFlashcards);$("mistakes-btn").addEventListener("click",startMistakes);
+$("sound-btn").addEventListener("click",()=>{state.settings.sound=!state.settings.sound;saveState();renderTopStats();if(state.settings.sound)sfx("correct");showToast(state.settings.sound?"Sound on":"Sound off");});
+$("theme-btn").addEventListener("click",()=>{const dark=document.documentElement.dataset.theme==="dark";state.settings.theme=dark?"light":"dark";saveState();applyTheme();});
+$("music-btn").addEventListener("click",()=>{state.settings.music=!state.settings.music;gestured=true;saveState();applyMusic();showToast(state.settings.music?"Music on 🎵":"Music off");});
+$("settings-btn").addEventListener("click",openSettings);
+/* ---- PWA: install button ---- */
+let deferredInstall=null;
+const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function updateInstallBtn(){const b=$("install-btn");if(b)b.classList.toggle("hidden",isStandalone()||!(deferredInstall||isIOS()));}
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;updateInstallBtn();});
+addEventListener("appinstalled",()=>{deferredInstall=null;updateInstallBtn();showToast("App installed! 🎉");});
+$("install-btn").addEventListener("click",async()=>{
+  if(deferredInstall){deferredInstall.prompt();try{await deferredInstall.userChoice;}catch{}deferredInstall=null;updateInstallBtn();}
+  else if(isIOS())openSheet("Install on iPhone / iPad",`<ol class="steps"><li>Tap the <b>Share</b> button ⬆️ in Safari.</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>. English Adventure now opens like a real app!</li></ol>`);});
+document.querySelector(".robot-area").addEventListener("click",()=>{const r=document.querySelector(".robot");r.classList.remove("jump");void r.offsetWidth;r.classList.add("jump");$("robot-message").textContent="💡 "+rand(TIPS);sfx("click");});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){if(!$("sheet-modal").classList.contains("hidden"))closeSheet();else if(!$("lesson-modal").classList.contains("hidden"))closeLesson();return;}
+  if($("lesson-modal").classList.contains("hidden")||!session||session.done)return;
+  const tag=document.activeElement&&document.activeElement.tagName;
+  if(/^[1-9]$/.test(e.key)&&tag!=="INPUT"&&!session.answered&&(session.item.type==="mcq"||session.item.type==="listen")){const b=document.querySelectorAll(".answer-option")[+e.key-1];if(b)b.click();}
+  else if(e.key==="Enter"&&tag!=="INPUT"&&tag!=="BUTTON"){e.preventDefault();onPrimary();}});
+{const mq=matchMedia("(prefers-color-scheme: dark)");if(mq.addEventListener)mq.addEventListener("change",applyTheme);}
+if(canSpeak())try{speechSynthesis.getVoices();}catch{}
+setInterval(()=>{if(regenHearts())saveState();renderTopStats();const ht=$("heart-timer");if(ht)ht.textContent=nextHeartText()||"0:00";},1000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){newDayChecks();if(regenHearts())saveState();render();}});
+if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").then(reg=>{
+    reg.addEventListener("updatefound",()=>{const nw=reg.installing;if(nw)nw.addEventListener("statechange",()=>{if(nw.state==="installed"&&navigator.serviceWorker.controller)showToast("Update ready ✨ Reopen the app to get it.");});});
+  }).catch(()=>{}));}
+
+newDayChecks();regenHearts();saveState();applyTheme();render();updateInstallBtn();
+// app shortcuts from the home-screen icon (long-press) e.g. ?action=quick
+{const a=new URLSearchParams(location.search).get("action");
+ if(a){setTimeout(()=>{if(a==="continue")$("continue-btn").click();else if(a==="quick")startQuick();else if(a==="cards")openFlashcards();history.replaceState(null,"",location.pathname);},400);}}
