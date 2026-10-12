@@ -444,10 +444,11 @@ function openStories(){
   document.querySelectorAll("#sheet-body .story-card").forEach(b=>b.addEventListener("click",()=>{closeSheet();startStory(+b.dataset.i);}));}
 BADGES.push({id:"story1",icon:"📖",name:"Storyteller",desc:"Finish a story",test:x=>(x.stories||[]).length>=1},
             {id:"story3",icon:"🎬",name:"Story Master",desc:"Finish all 3 stories",test:x=>(x.stories||[]).length>=3});
-$("level-btn").addEventListener("click",startLevelTest);
-$("story-btn").addEventListener("click",openStories);
+on("level-btn","click",startLevelTest);
+on("story-btn","click",openStories);
 
 
+function on(id,ev,fn){const e=$(id);if(e)e.addEventListener(ev,fn);}
 /* ---------------- Ask C-BOT: doubt bank (works offline, no AI) ---------------- */
 const DOUBT_BANK=[
  {k:["past","tense","yesterday","went"],en:"For yesterday or any finished past action, use the past tense. Go becomes went, and play becomes played.",or:"ଗତକାଲି କିମ୍ବା ଅତୀତର କାମ ପାଇଁ ଅତୀତ କାଳ ବ୍ୟବହାର କରନ୍ତୁ। Go → went, play → played।",hi:"कल या बीते समय के काम के लिए भूतकाल का प्रयोग करें। Go → went, play → played।"},
@@ -496,7 +497,7 @@ function openAsk(){
     catch(err){showToast(voiceErrorText(err));}
     finally{mic.disabled=false;mic.textContent="🎤 Speak";}});
   setTimeout(()=>{try{inp.focus();}catch{}},120);}
-$("ask-btn").addEventListener("click",openAsk);
+on("ask-btn","click",openAsk);
 
 /* ---------------- Sessions ---------------- */
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
@@ -871,7 +872,7 @@ function updateRobotLangBtn(){const b=$("robot-lang-btn");if(b)b.textContent="�
 function setRobotLang(v){if(!ROBOT_LANGS[v])return;state.settings.robotLang=v;saveState();updateRobotLangBtn();
   document.querySelectorAll("#robot-lang-chips .chip").forEach(c=>c.classList.toggle("active",c.dataset.rl===v));
   if(speechSynthesis)speechSynthesis.cancel();render();robotTalk([greetingLine(),"ନମସ୍କାର! ନୂଆ ଅଭିଯାନ ପାଇଁ ପ୍ରସ୍ତୁତ?","नमस्ते! नई यात्रा के लिए तैयार हैं?"]);}
-$("robot-lang-btn").addEventListener("click",()=>{const order=["en","or","hi"];const next=order[(order.indexOf(robotLangNow())+1)%3];setRobotLang(next);showToast("Robot language: "+ROBOT_LANGS[next].label);});
+on("robot-lang-btn","click",()=>{const order=["en","or","hi"];const next=order[(order.indexOf(robotLangNow())+1)%3];setRobotLang(next);showToast("Robot language: "+ROBOT_LANGS[next].label);});
 /* ---- PWA: install button (always visible until the app is installed) ---- */
 let deferredInstall=null;
 const launchedAsApp=/[?&](app=1|source=pwa)/.test(location.search);
