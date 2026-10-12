@@ -20,9 +20,9 @@ function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replac
 /* ---------------- State ---------------- */
 const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
   wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
-  srs:{},profile:{name:"",age:"",source:"",reason:"",tourDone:false},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
+  stories:[],srs:{},profile:{name:"",age:"",source:"",reason:"",tourDone:false},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
 function sanitize(m){const f=freshState();
-  ["completed","activeDays","mistakes","wordsSeen","badges"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
+  ["completed","activeDays","mistakes","wordsSeen","badges","stories"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
   if(!m.srs||typeof m.srs!=="object")m.srs={};
   m.profile={...f.profile,...(m.profile&&typeof m.profile==="object"?m.profile:{})};
   ["xp","hearts","streak","dailyCompleted","bestAccuracy","totalAnswered","totalCorrect","wordIndex","dailyGoal","heartTime","perfectCount","bestCombo","speedBest","mistakesFixed"].forEach(k=>{if(typeof m[k]!=="number"||!isFinite(m[k]))m[k]=f[k];});
@@ -280,6 +280,87 @@ function render(){
   const w=WORDS[state.wordIndex%WORDS.length];$("word-en").textContent=w.en;$("word-odia").textContent=w.odia;$("word-example").textContent="Example: "+w.example;
 }
 
+
+/* ---------------- Upgrade 2: Level test ---------------- */
+const TIER_COUNTS=[3,3,2,2];   // questions per level: beginner, elementary, intermediate, advanced
+function buildLevelTest(){
+  const qs=[];
+  LEVELS.forEach((level,i)=>{
+    const pool=[];
+    level.lessons.forEach(l=>{
+      if(!l.auto)(l.questions||[]).forEach(q=>{if(q.type==="mcq")pool.push(clone(q));});
+      if(l.pairs){const local=l.pairs.map(([en,odia])=>({en,odia}));l.pairs.forEach(([en,odia])=>pool.push(vocabMcq({en,odia},"odia-en",local)));}
+    });
+    qs.push(...shuffle(pool).slice(0,TIER_COUNTS[i]));
+  });
+  return qs;}
+function startLevelTest(){
+  if(state.mode!=="odia-en")state.mode="odia-en";
+  startSession({kind:"leveltest",title:"Level Test",icon:"🎯",kicker:"LEVEL TEST",questions:buildLevelTest(),restart:startLevelTest});}
+function placeAt(idx){
+  LEVELS.slice(0,idx).forEach(l=>l.lessons.forEach(x=>{if(!state.completed.includes(x.id))state.completed.push(x.id);}));
+  state.placedLevel=idx;saveState();render();}
+function finishLevelTest(){
+  const s=session;s.done=true;stopTimer();
+  const c=s.correct,total=s.total;
+  const placed=c>=9?3:c>=7?2:c>=5?1:0;
+  const lv=LEVELS[placed];
+  $("lesson-progress-bar").style.width="100%";
+  $("lesson-screen").innerHTML=`<div class="lesson-result"><div class="result-emoji">🎯</div><p class="lesson-kicker">LEVEL TEST DONE</p><h2>${c} of ${total} correct</h2>
+    <p class="muted">Based on your answers, we suggest starting at <b>${esc(lv.name)}</b> (${esc(lv.level)}). You can change this any time.</p>
+    <div class="result-actions"><button class="primary-btn" id="lt-start">Start at ${esc(lv.name)}</button><button class="secondary-btn" id="lt-all">Start from the beginning</button></div></div>`;
+  $("lt-start").addEventListener("click",()=>{placeAt(placed);closeLesson(true);showToast(`Your path starts at ${lv.name} 🎉`);});
+  $("lt-all").addEventListener("click",()=>closeLesson(true));
+  sfx(c>=7?"win":"lose");
+  if(c>=7)confetti(90);
+}
+
+/* ---------------- Upgrade 2: Story time ---------------- */
+const STORIES=[
+ {id:"rina-school",title:"Rina's School Day",emoji:"🏫",
+  sentences:[
+   {en:"Rina wakes up early in the morning.",or:"ରୀନା ସକାଳୁ ଶୀଘ୍ର ଉଠେ।",hi:"रीना सुबह जल्दी उठती है।"},
+   {en:"She brushes her teeth and eats rice.",or:"ସେ ଦାନ୍ତ ବ୍ରଶ୍ କରି ଭାତ ଖାଏ।",hi:"वह दांत साफ़ करती है और चावल खाती है।"},
+   {en:"She walks to school with her friend.",or:"ସେ ତା ବନ୍ଧୁ ସହ ସ୍କୁଲକୁ ଯାଏ।",hi:"वह अपनी सहेली के साथ स्कूल पैदल जाती है।"},
+   {en:"Her teacher is kind and she loves English class.",or:"ତା ଶିକ୍ଷକ ଦୟାଳୁ ଏବଂ ସେ ଇଂରାଜୀ କ୍ଲାସ୍ ଭଲ ପାଏ।",hi:"उसकी शिक्षिका दयालु हैं और उसे अंग्रेज़ी की कक्षा पसंद है।"}],
+  questions:[
+   {q:"Who wakes up early?",o:["Rina","Her teacher","Her friend"],a:"Rina",e:"Rina wakes up early in the morning."},
+   {q:"What does Rina eat?",o:["Bread","Rice","Fish"],a:"Rice",e:"She brushes her teeth and eats rice."},
+   {q:"Where does Rina walk to?",o:["The market","The park","School"],a:"School",e:"She walks to school with her friend."}]},
+ {id:"raju-market",title:"Raju at the Market",emoji:"🛒",
+  sentences:[
+   {en:"Raju goes to the market with his mother.",or:"ରାଜୁ ତା ମା ସହ ବଜାରକୁ ଯାଏ।",hi:"राजू अपनी माँ के साथ बाज़ार जाता है।"},
+   {en:"He buys a red apple and a banana.",or:"ସେ ଗୋଟିଏ ଲାଲ ସେଓ ଓ ଗୋଟିଏ କଦଳୀ କିଣେ।",hi:"वह एक लाल सेब और एक केला खरीदता है।"},
+   {en:"The fish is fresh and very cheap today.",or:"ଆଜି ମାଛ ତାଜା ଏବଂ ବହୁତ ସସ୍ତା।",hi:"आज मछली ताज़ी और बहुत सस्ती है।"},
+   {en:"Raju says thank you to the shopkeeper.",or:"ରାଜୁ ଦୋକାନୀଙ୍କୁ ଧନ୍ୟବାଦ କହେ।",hi:"राजू दुकानदार को धन्यवाद कहता है।"}],
+  questions:[
+   {q:"What does Raju buy?",o:["A red apple and a banana","Rice and milk","Eggs and tea"],a:"A red apple and a banana",e:"He buys a red apple and a banana."},
+   {q:"Who does Raju go with?",o:["His father","His mother","His friend"],a:"His mother",e:"Raju goes to the market with his mother."},
+   {q:"What does Raju say to the shopkeeper?",o:["Sorry","Hello","Thank you"],a:"Thank you",e:"Raju says thank you to the shopkeeper."}]},
+ {id:"birthday-cake",title:"Mother's Birthday",emoji:"🎂",
+  sentences:[
+   {en:"Today is my mother's birthday.",or:"ଆଜି ମୋ ମାଙ୍କ ଜନ୍ମଦିନ।",hi:"आज मेरी माँ का जन्मदिन है।"},
+   {en:"I make a card and draw a big flower.",or:"ମୁଁ ଏକ କାର୍ଡ ବନାଏ ଓ ଏକ ବଡ଼ ଫୁଲ ଆଙ୍କେ।",hi:"मैं एक कार्ड बनाता हूँ और एक बड़ा फूल बनाता हूँ।"},
+   {en:"My sister helps me write Happy Birthday.",or:"ମୋ ଭଉଣୀ ମୋତେ Happy Birthday ଲେଖିବାରେ ସାହାଯ୍ୟ କରେ।",hi:"मेरी बहन मुझे Happy Birthday लिखने में मदद करती है।"},
+   {en:"We sing a song and eat a sweet cake.",or:"ଆମେ ଗୀତ ଗାଉ ଓ ମିଠା କେକ୍ ଖାଉ।",hi:"हम गाना गाते हैं और मीठा केक खाते हैं।"}],
+  questions:[
+   {q:"What is today?",o:["My mother's birthday","A school holiday","My birthday"],a:"My mother's birthday",e:"Today is my mother's birthday."},
+   {q:"What does the writer draw?",o:["A big flower","A house","A car"],a:"A big flower",e:"I make a card and draw a big flower."},
+   {q:"What do they eat?",o:["Sweet cake","Rice","Fish"],a:"Sweet cake",e:"We sing a song and eat a sweet cake."}]}
+];
+function startStory(i){
+  const st=STORIES[i];
+  const reads=st.sentences.map((x,k)=>({type:"read",prompt:x.en,hint:`${st.title} · ${k+1} / ${st.sentences.length}`,answer:x.en,say:x.en,explanation:"",tr:{or:x.or,hi:x.hi}}));
+  const qs=st.questions.map(q=>({type:"mcq",prompt:q.q,hint:`${st.title} · Questions`,answer:q.a,options:shuffle(q.o.slice()),explanation:q.e}));
+  startSession({kind:"story",title:st.title,icon:st.emoji,kicker:"STORY TIME",questions:[...reads,...qs],storyIndex:i,restart:()=>startStory(i)});}
+function openStories(){
+  openSheet("Story Time 📖",`<p class="muted">Read each sentence, listen to it, then answer 3 questions.</p>`+STORIES.map((st,i)=>`<button class="story-card" data-i="${i}"><span class="story-emoji">${st.emoji}</span><span><b>${esc(st.title)}</b><small>${state.stories.includes(st.id)?"✅ Finished · replay for 5 XP":"4 sentences · 3 questions · +25 XP"}</small></span></button>`).join(""));
+  document.querySelectorAll("#sheet-body .story-card").forEach(b=>b.addEventListener("click",()=>{closeSheet();startStory(+b.dataset.i);}));}
+BADGES.push({id:"story1",icon:"📖",name:"Storyteller",desc:"Finish a story",test:x=>(x.stories||[]).length>=1},
+            {id:"story3",icon:"🎬",name:"Story Master",desc:"Finish all 3 stories",test:x=>(x.stories||[]).length>=3});
+$("level-btn").addEventListener("click",startLevelTest);
+$("story-btn").addEventListener("click",openStories);
+
 /* ---------------- Sessions ---------------- */
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
 function syncModalLock(){document.body.classList.toggle("modal-open",!$("lesson-modal").classList.contains("hidden")||!$("sheet-modal").classList.contains("hidden")||!$("tour").classList.contains("hidden"));}
@@ -298,22 +379,22 @@ function startMistakes(){if(!state.mistakes.length){showToast("No mistakes to fi
 function startSession(o){
   stopTimer();
   if(o.kind==="lesson"){regenHearts();if(state.hearts<=0){showNoHearts(null,o);return;}}
-  session={...o,queue:o.questions.slice(),idx:0,total:o.questions.length,correct:0,answered:false,combo:0,bestCombo:0,xpGained:0,done:false,practice:o.kind!=="lesson",selected:null};
+  session={...o,queue:o.questions.slice(),idx:0,total:o.questions.filter(q=>q.type!=="read").length,correct:0,answered:false,combo:0,bestCombo:0,xpGained:0,done:false,practice:o.kind!=="lesson",selected:null};
   $("lesson-modal").classList.remove("hidden");syncModalLock();renderQuestion();}
 function heartsUI(){const v=session&&session.practice?"∞":state.hearts;$("lesson-hearts").textContent=v;$("top-hearts").textContent=state.hearts;}
 function coach(kind){return rand(kind==="good"?["Great job!","Super!","Well done!","Excellent!","You're on fire!","Perfect!"]:kind==="bad"?["No worries, we'll fix it!","Mistakes help us learn.","Almost! Try again later.","Keep going, you can do it!"]:["Take your time!","You can do this!","Think, then tap.","Read carefully.","Say it in your head first."]);}
-const INSTR={mcq:"Choose the best answer.",listen:"Tap 🔊 to listen, then choose.",type:"Type your answer below.",arrange:"Tap the words to build the sentence.",match:"Tap one item on each side to match them.",say:"Tap the mic and say it clearly."};
+const INSTR={read:"Listen, then tap Next.",mcq:"Choose the best answer.",listen:"Tap 🔊 to listen, then choose.",type:"Type your answer below.",arrange:"Tap the words to build the sentence.",match:"Tap one item on each side to match them.",say:"Tap the mic and say it clearly."};
 function renderQuestion(){
   const s=session;stopTimer();const item=s.queue[s.idx];s.item=item;s.answered=false;s.selected=null;s.arranged=[];
   heartsUI();$("lesson-progress-bar").style.width=(s.idx/s.queue.length*100)+"%";
   const retry=item._retry,pre=previewText(item);
-  const speakBtn=item.type==="listen"?`<div class="listen-row"><button class="speak-btn big" id="speak-q" aria-label="Play audio">🔊</button><button class="speak-btn" id="speak-slow" aria-label="Play slowly">🐢</button></div>`:pre?`<div class="listen-row"><button class="speak-btn" id="speak-q" aria-label="Hear it">🔊 Normal</button><button class="speak-btn" id="speak-slow2" aria-label="Play slowly">🐢 Slow</button></div>`:"";
+  const speakBtn=item.type==="read"?`<div class="listen-row"><button class="speak-btn big" id="speak-q" aria-label="Listen">🔊 Listen</button><button class="speak-btn" id="speak-slow" aria-label="Play slowly">🐢 Slow</button></div>`:item.type==="listen"?`<div class="listen-row"><button class="speak-btn big" id="speak-q" aria-label="Play audio">🔊</button><button class="speak-btn" id="speak-slow" aria-label="Play slowly">🐢</button></div>`:pre?`<div class="listen-row"><button class="speak-btn" id="speak-q" aria-label="Hear it">🔊 Normal</button><button class="speak-btn" id="speak-slow2" aria-label="Play slowly">🐢 Slow</button></div>`:"";
   $("lesson-screen").innerHTML=`<div class="lesson-content"><p class="lesson-kicker">${esc(s.kicker)} · ${retry?"REVIEW":"QUESTION "+(s.idx+1)+"/"+s.queue.length}</p><h2>${esc(s.title)}</h2>
     <p class="coach"><span class="coach-bot">🤖</span><span id="coach-line"></span></p>
     ${s.timed?`<div class="timer"><i id="timer-bar"></i></div>`:""}
-    <div class="question-card"><div class="question-emoji">${s.icon}</div><p class="question-prompt">${esc(item.prompt)}</p><p class="question-hint">${esc(item.hint||"")}</p>${speakBtn}</div>
+    <div class="question-card"><div class="question-emoji">${s.icon}</div><p class="question-prompt">${esc(item.prompt)}</p><p class="question-hint">${esc(item.hint||"")}</p>${item.tr?`<p class="story-tr">${esc(item.tr[robotLangNow()==="hi"?"hi":"or"])}</p>`:""}${speakBtn}</div>
     <p class="lesson-instruction">${INSTR[item.type]||INSTR.mcq}</p><div class="answer-area" id="answer-area"></div><div id="feedback" aria-live="polite"></div>
-    <div class="lesson-bottom"><span class="combo" id="combo-pill">${s.combo>=2?"🔥 Combo ×"+s.combo:"Correct answer earns XP ⭐"}</span>${SR_CLASS&&item.type!=="say"?`<button class="voice-chip" id="voice-btn" aria-label="Speak your answer">${item.type==="match"?"🎤 Say a word":"🎤 Speak"}</button>`:""}<button class="primary-btn" id="check-btn" disabled>${item.type==="match"?"Match all pairs":"Check answer"}</button></div></div>`;
+    <div class="lesson-bottom"><span class="combo" id="combo-pill">${s.combo>=2?"🔥 Combo ×"+s.combo:"Correct answer earns XP ⭐"}</span>${SR_CLASS&&item.type!=="say"?`<button class="voice-chip" id="voice-btn" aria-label="Speak your answer">${item.type==="match"?"🎤 Say a word":"🎤 Speak"}</button>`:""}<button class="primary-btn" id="check-btn" ${item.type==="read"?"":"disabled"}>${item.type==="match"?"Match all pairs":item.type==="read"?"Next →":"Check answer"}</button></div></div>`;
   typeText($("coach-line"),retry?"Let's try this one again!":coach(),22);
   const vb0=$("voice-btn");if(vb0)vb0.addEventListener("click",()=>voiceSolve(item));
   const sq=$("speak-q");if(sq)sq.addEventListener("click",()=>speak(pre||item.say));const ss=$("speak-slow");if(ss)ss.addEventListener("click",()=>speak(item.say,.5));const s2=$("speak-slow2");if(s2)s2.addEventListener("click",()=>speak(pre,.5));
@@ -435,6 +516,7 @@ function startTimer(){const s=session,item=s.item,t0=Date.now(),bar=$("timer-bar
 function onPrimary(){const s=session;if(!s||s.done)return;
   if(s.answered){advance();return;}
   const item=s.item;
+  if(item.type==="read"){advance();return;}
   if(item.type==="mcq"||item.type==="listen"){if(s.selected==null)return;resolve(s.selected===item.answer,item.answer,s.selected);}
   else if(item.type==="type"){const v=$("type-input").value;if(!v.trim())return;resolve(norm(v)===norm(item.answer),item.answer,v);}
   else if(item.type==="say"){if(!SR_CLASS){const v=($("type-input")||{}).value||"";if(!v.trim())return;resolve(norm(v)===norm(item.answer),item.answer,v);}}
@@ -442,7 +524,7 @@ function onPrimary(){const s=session;if(!s||s.done)return;
 function resolve(correct,correctText,userAnswer,opts){
   opts=opts||{};const s=session;if(!s||s.answered)return;const item=s.item;s.answered=true;stopTimer();
   const retry=!!item._retry;let gain=0;
-  if(!retry)srsRecord(item,correct);
+  if(!retry&&s.kind!=="leveltest")srsRecord(item,correct);
   {const mb=$("mic-btn");if(mb)mb.disabled=true;const vb2=$("voice-btn");if(vb2)vb2.disabled=true;}
   if(!retry)state.totalAnswered++;
   if(correct){sfx("correct");
@@ -451,8 +533,8 @@ function resolve(correct,correctText,userAnswer,opts){
     if(s.kind==="mistakes"){const e=state.srs[srsKey(item)];if(e&&e.box>=4)removeMistake(item);}
   }else{sfx("wrong");s.combo=0;
     if(!opts.skipHeart&&s.kind==="lesson")loseHeart();
-    if(s.kind!=="mistakes"&&!retry)addMistake(item);
-    if(!retry&&s.kind!=="speed")s.queue.push({...clone(item),_retry:true});}
+    if(s.kind!=="mistakes"&&s.kind!=="leveltest"&&!retry)addMistake(item);
+    if(!retry&&s.kind!=="speed"&&s.kind!=="leveltest")s.queue.push({...clone(item),_retry:true});}
   // mark UI
   document.querySelectorAll(".answer-option").forEach(b=>{b.disabled=true;if(b.dataset.value===item.answer)b.classList.add("correct");else if(b.dataset.value===s.selected)b.classList.add("wrong");});
   const inp=$("type-input");if(inp){inp.disabled=true;inp.classList.add(correct?"ok":"bad");}
@@ -461,7 +543,7 @@ function resolve(correct,correctText,userAnswer,opts){
   const fb=$("feedback");fb.className="feedback "+(correct?"good":"bad");
   const head=correct?(item.type==="match"?"Perfect matching!":coach("good"))+(gain?` +${gain} XP`:""):opts.timeUp?"Time's up!":item.type==="match"?"Some pairs were wrong.":"Not quite.";
   const showAns=!correct&&item.type!=="match";
-  const again=!correct&&!retry&&s.kind!=="speed"?" We'll ask this again at the end.":"";
+  const again=!correct&&!retry&&s.kind!=="speed"&&s.kind!=="leveltest"?" We'll ask this again at the end.":"";
   fb.innerHTML=`<b>${esc(head)}</b> ${showAns?"Correct answer: <b>"+esc(correctText)+"</b>. ":""}${esc(item.explanation||"")}${esc(again)} ${speakText?'<button class="speak-btn small" id="speak-fb">🔊 Hear it</button>':""}`;
   const sf=$("speak-fb");if(sf)sf.addEventListener("click",()=>speak(speakText));
   if(speakText&&state.settings.autoRead&&state.settings.sound)setTimeout(()=>speak(speakText),250);
@@ -484,6 +566,7 @@ function showNoHearts(resume,startOpts){
   $("nh-practice").addEventListener("click",()=>{closeLesson(true);startQuick();});
   $("nh-home").addEventListener("click",()=>closeLesson(true));}
 function finishSession(){
+  if(session&&session.kind==="leveltest"){finishLevelTest();return;}
   const s=session;s.done=true;stopTimer();
   const total=s.total,correct=s.correct,acc=total?Math.round(correct/total*100):0;
   const passed=s.kind==="speed"?correct>=1:correct>=Math.ceil(total*.5),perfect=total>0&&correct===total;
@@ -492,6 +575,7 @@ function finishSession(){
     if(s.kind==="lesson"){const first=!state.completed.includes(s.lesson.id);
       if(first){state.completed.push(s.lesson.id);bonus+=s.lesson.xp;state.hearts=Math.min(5,state.hearts+1);if(state.hearts>=5)state.heartTime=0;}else bonus+=Math.round(s.lesson.xp*.25);
       if(perfect){bonus+=10;state.perfectCount++;}}
+    else if(s.kind==="story"){const id=STORIES[s.storyIndex].id;if(!state.stories.includes(id)){state.stories.push(id);bonus+=25;}else bonus+=5;}
     else bonus+=s.kind==="speed"?5:3;
     markActive();state.dailyCompleted++;
     if(state.dailyCompleted>=state.dailyGoal&&state.dailyBonusDate!==todayKey()){state.dailyBonusDate=todayKey();bonus+=DAILY_BONUS;dailyMsg=`🎯 Daily goal reached! +${DAILY_BONUS} XP`;}
@@ -622,7 +706,8 @@ function showTourStep(){
     box.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{state.profile[st.key]=c.dataset.v;box.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===c));sfx("click");}));}
   $("tour-next").textContent=st.last?"Start the game →":"Next →";
   typeText($("tour-bubble"),tourLine(st,li),22);
-  speakRobot(tourLine(st,li),ROBOT_LANGS[lang].tag);
+  const seq=[["en","en-IN"],["or","or-IN"],["hi","hi-IN"]].map(([k,tag],j)=>[tourLine(st,j),tag]);
+  (function chain(k){if(k>=seq.length)return;speakRobot(seq[k][0],seq[k][1],()=>chain(k+1));})(0);
   const inp=$("tour-text-in");if(inp&&!inp.value)setTimeout(()=>{try{inp.focus();}catch{}},150);
 }
 $("tour-next").addEventListener("click",()=>{
@@ -695,6 +780,7 @@ lessonById("simple-sentences").sayLine={en:"I am a student.",odia:"ମୁଁ ଜ
 lessonById("questions").sayLine={en:"How are you?",odia:"ତୁମେ କେମିତି ଅଛ?"};
 lessonById("real-life").sayLine={en:"Nice to meet you.",odia:"ଆପଣଙ୍କୁ ଭେଟି ଆନନ୍ଦିତ।"};
 newDayChecks();regenHearts();saveState();applyTheme();render();updateInstallBtn();updateRobotLangBtn();
+setTimeout(()=>{const sp=$("splash");if(sp){sp.classList.add("gone");setTimeout(()=>sp.remove(),800);}},1600);
 if(state.profile.tourDone)setTimeout(()=>robotTalk([greetingLine(),"ନମସ୍କାର! ନୂଆ ଅଭିଯାନ ପାଇଁ ପ୍ରସ୍ତୁତ?","नमस्ते! नई यात्रा के लिए तैयार हैं?"]),800);
 else setTimeout(openTour,500);
 // app shortcuts from the home-screen icon (long-press) e.g. ?action=quick

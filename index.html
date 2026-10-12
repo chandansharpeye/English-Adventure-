@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#6558e8">
   <meta name="description" content="Odia to English Adventure: learn English with Odia meanings, games, and a friendly robot teacher.">
-  <title>Odia to English Adventure — Learn English by Playing</title>
+  <title>O-E Adventure — Learn English by Playing</title>
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="splash" id="splash" aria-hidden="true"><img class="splash-img" src="splash.png" alt=""><div class="splash-name">O-E Adventure</div><div class="splash-sub">Learn English · ଇଂରାଜୀ · अंग्रेज़ी</div></div>
   <header class="topbar">
     <a class="brand" href="#" aria-label="Odia to English Adventure home">
       <span class="brand-mark">EA</span><span>Odia to English <b>Adventure</b></span>
@@ -112,6 +113,8 @@
         <button class="practice-card" id="quick-btn"><span class="pc-icon">⚡</span><b>Quick Practice</b><small>8 mixed questions · no hearts needed</small></button>
         <button class="practice-card" id="speed-btn"><span class="pc-icon">⏱️</span><b>Speed Round</b><small>15 seconds per question</small></button>
         <button class="practice-card" id="cards-btn"><span class="pc-icon">🗂️</span><b>Flashcards</b><small>Words with sound &amp; examples</small></button>
+        <button class="practice-card" id="level-btn"><span class="pc-icon">🎯</span><b>Level Test</b><small>10 questions · find your level</small></button>
+        <button class="practice-card" id="story-btn"><span class="pc-icon">📖</span><b>Story Time</b><small>Read, listen and answer</small></button>
         <button class="practice-card" id="mistakes-btn"><span class="pc-icon">🛠️</span><b>Mistakes Notebook</b><small id="mistake-count">All clear!</small></button>
       </div>
     </section>

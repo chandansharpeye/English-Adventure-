@@ -217,3 +217,18 @@ button,.chip,.unit-btn{touch-action:manipulation}
 .tour-actions .primary-btn{flex:1}
 [data-theme="dark"] .tour-card{background:#1c1936}
 [data-theme="dark"] .tour-bubble{background:linear-gradient(135deg,#26224a,#1c1936);border-color:#3a3566}
+
+/* ---- splash screen ---- */
+.splash{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:linear-gradient(160deg,#8f81ff,#4536c8);color:#fff;transition:opacity .6s ease,visibility .6s;text-align:center;padding:24px}
+.splash.gone{opacity:0;visibility:hidden}
+.splash-img{width:min(56vw,230px);border-radius:46px;box-shadow:0 22px 50px #0004;animation:splashPop .6s ease}
+.splash-name{font-size:28px;font-weight:900;letter-spacing:.3px}
+.splash-sub{font-size:13px;opacity:.88;font-weight:700}
+@keyframes splashPop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+/* ---- story time ---- */
+.story-card{display:flex;align-items:center;gap:14px;width:100%;margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff;color:var(--ink);text-align:left}
+.story-card:hover{box-shadow:var(--shadow)}
+.story-card b{display:block;font-size:15px}.story-card small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.story-emoji{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:var(--lav);font-size:26px;flex:none}
+.story-tr{margin:10px 0 0;font-family:"Noto Sans Oriya","Noto Sans Devanagari",Nunito,sans-serif;font-size:15px;font-weight:700;color:#5b4fd0;line-height:1.5}
+[data-theme="dark"] .story-card{background:#1c1936}

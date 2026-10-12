@@ -1,12 +1,12 @@
 {
-  "name": "Odia to English Adventure",
+  "name": "O-E Adventure",
   "short_name": "O-E Adventure",
-  "description": "Learn English through games with Odia meanings.",
+  "description": "Learn English with Odia and Hindi meanings, a talking robot, games, quizzes and stories.",
   "start_url": "./",
   "scope": "./",
   "id": "./",
   "display": "standalone",
-  "background_color": "#f7f8fe",
+  "background_color": "#6e5cf0",
   "theme_color": "#6558e8",
   "icons": [
     {
