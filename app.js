@@ -235,9 +235,10 @@ function removeMistake(item){const n=state.mistakes.length;state.mistakes=state.
 
 /* ---------------- Rendering the home screen ---------------- */
 function greetingLine(){
-  if(!state.completed.length)return "Namaskar! Ready for a new adventure?";
-  if(state.streak>=3)return `🔥 ${state.streak}-day streak! Keep it going!`;
-  const h=new Date().getHours();return (h<12?"Good morning":h<17?"Good afternoon":"Good evening")+"! Ready for another quest?";}
+  const nm=state.profile&&state.profile.name?", "+state.profile.name:"";
+  if(!state.completed.length)return nm?`Namaskar${nm}! Ready for a new adventure?`:"Namaskar! Ready for a new adventure?";
+  if(state.streak>=3)return `🔥 ${state.streak}-day streak${nm}! Keep it going!`;
+  const h=new Date().getHours();return (h<12?"Good morning":h<17?"Good afternoon":"Good evening")+nm+"! Ready for another quest?";}
 function weekDots(){let out="";
   for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const on=state.activeDays.includes(keyFor(d));
     out+=`<span class="wd${on?" on":""}${i===0?" today":""}"><i>${on?"🔥":""}</i><em>${"SMTWTFS"[d.getDay()]}</em></span>`;}
