@@ -38,3 +38,15 @@ Tap **📲 Install app** inside the game to see an **Install check** (https, man
 
 ## Files
 `index.html` `styles.css` `data.js` `app.js` `audio.js` `sw.js` `offline.html` `manifest.json` `` (icons, screenshots) · hosting helpers: `_headers` `netlify.toml` `vercel.json` `.nojekyll`
+
+## C-BOT AI Tutor (Hybrid mode)
+
+The C-BOT chat panel has an offline fallback and can use online AI when deployed with the included Vercel serverless endpoint (`api/chat.js`). Existing game modules and progress keys are preserved; chat history is stored separately in the browser under `oe-cbot-ai-v1`.
+
+To enable online AI:
+1. Deploy this folder to **Vercel** (the static-only GitHub Pages deployment cannot run the API endpoint).
+2. In Vercel → Project → Settings → Environment Variables, add `OPENAI_API_KEY` with your secret key. Optionally set `OPENAI_MODEL` (default `gpt-4o-mini`).
+3. Redeploy. The browser calls `/api/chat`; the secret key stays on the server and is never shipped to the client.
+4. Without internet, or if the API is not configured, C-BOT switches to basic offline practice patterns.
+
+AI use may incur provider charges. Do not publish the API key, and consider setting usage limits at the AI provider. This endpoint includes input limits but production public deployments should also add robust rate limiting / abuse protection before sharing widely.
