@@ -20,7 +20,7 @@ function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replac
 /* ---------------- State ---------------- */
 const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
   wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
-  stories:[],srs:{},profile:{name:"",age:"",source:"",reason:"",tourDone:false},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
+  stories:[],srs:{},profile:{name:"",age:"",source:"",reason:"",level:"",daily:"",tourDone:false},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
 function sanitize(m){const f=freshState();
   ["completed","activeDays","mistakes","wordsSeen","badges","stories"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
   if(!m.srs||typeof m.srs!=="object")m.srs={};
@@ -680,6 +680,8 @@ const TOUR_STEPS=[
  {kind:"age",key:"age",line:["How old are you{n}?","ଆପଣଙ୍କ ବୟସ କେତେ{n}?","आपकी उम्र कितनी है{n}?"]},
  {kind:"chips",key:"source",line:["How did you know about us?","ଆପଣ ଆମ ବିଷୟରେ କେମିତି ଜାଣିଲେ?","आप हमारे बारे में कैसे जाने?"],opts:[["Friend","ବନ୍ଧୁ","दोस्त"],["School","ସ୍କୁଲ୍","स्कूल"],["Social media","ସୋସିଆଲ୍ ମିଡ଼ିଆ","सोशल मीडिया"],["Other","ଅନ୍ୟ","अन्य"]]},
  {kind:"chips",key:"reason",line:["Why do you want to learn English?","ଆପଣ ଇଂରାଜୀ କାହିଁକି ଶିଖିବାକୁ ଚାହୁଁଛନ୍ତି?","आप अंग्रेज़ी क्यों सीखना चाहते हैं?"],opts:[["Work","କାମ","काम"],["Study","ପଢ଼ା","पढ़ाई"],["Travel","ଭ୍ରମଣ","यात्रा"],["Confidence","ଆତ୍ମବିଶ୍ୱାସ","आत्मविश्वास"],["Fun","ମଜା","मज़ा"]]},
+ {kind:"chips",key:"level",line:["What is your English level?","ଆପଣଙ୍କ ଇଂରାଜୀ ସ୍ତର କେତେ?","आपकी अंग्रेज़ी का स्तर कैसा है?"],opts:[["Beginner","ଶୁରୁଆତୀ","शुरुआती"],["Intermediate","ମଧ୍ୟମ","मध्यम"],["Advanced","ଉନ୍ନତ","उन्नत"]]},
+ {kind:"chips",key:"daily",line:["How much time can you practise every day?","ଆପଣ ପ୍ରତିଦିନ କେତେ ସମୟ ଦେଇପାରିବେ?","आप हर दिन कितना समय दे सकते हैं?"],opts:[["5 min","୫ ମିନିଟ୍","5 मिनट"],["10 min","୧୦ ମିନିଟ୍","10 मिनट"],["15 min","୧୫ ମିନିଟ୍","15 मिनट"],["30+ min","୩୦+ ମିନିଟ୍","30+ मिनट"]]},
  {kind:"info",line:["I am C-BOT, a robot made with technology by Chandan. My real master is Chandan.","ମୁଁ C-BOT, ଚନ୍ଦନଙ୍କ ଦ୍ୱାରା ଟେକ୍ନୋଲୋଜି ସହ ତିଆରି ଏକ ରୋବଟ୍। ମୋର ଅସଲ ମାଲିକ ଚନ୍ଦନ।","मैं C-BOT हूँ, चंदन द्वारा तकनीक से बना एक रोबोट। मेरे असली मालिक चंदन हैं।"]},
  {kind:"info",last:true,line:["Let's start the game!","ଚାଲନ୍ତୁ ଖେଳ ଆରମ୍ଭ କରିବା!","चलिए खेल शुरू करते हैं!"]}
 ];
@@ -687,10 +689,17 @@ let tourIdx=0;
 const tourNameTag=()=>state.profile.name?", "+state.profile.name:"";
 function tourLine(st,i){return st.line[i].replace("{n}",tourNameTag());}
 function openTour(){tourIdx=0;$("tour").classList.remove("hidden");syncModalLock();showTourStep();}
+/* Apply the tour choices: level opens the path, daily time sets the daily goal */
+function applyTourChoices(){
+  const lv={Beginner:0,Intermediate:1,Advanced:2}[state.profile.level];
+  if(lv>0)placeAt(lv);
+  const mins=parseInt(state.profile.daily,10);
+  if(mins)state.dailyGoal=mins<=5?1:mins<=10?2:3;
+  saveState();}
 function closeTour(done){
   $("tour").classList.add("hidden");syncModalLock();
   try{speechSynthesis.cancel();}catch{}
-  if(done){state.profile.tourDone=true;saveState();}
+  if(done){state.profile.tourDone=true;applyTourChoices();saveState();}
   render();
   if(done){robotTalk([`Hi${tourNameTag()}! Let's play and learn together.`,`ନମସ୍କାର${tourNameTag()}! ଆସନ୍ତୁ ଏକାଠି ଶିଖିବା।`,`नमस्ते${tourNameTag()}! चलिए मिलकर सीखते हैं।`]);}
 }
