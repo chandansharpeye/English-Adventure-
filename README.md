@@ -50,3 +50,17 @@ To enable online AI:
 4. Without internet, or if the API is not configured, C-BOT switches to basic offline practice patterns.
 
 AI use may incur provider charges. Do not publish the API key, and consider setting usage limits at the AI provider. This endpoint includes input limits but production public deployments should also add robust rate limiting / abuse protection before sharing widely.
+
+
+## C-BOT Hybrid AI: GitHub Pages + Vercel
+
+GitHub Pages hosts the static game; it cannot run the API endpoint itself. Deploy this same project folder to Vercel for the backend (the `api/chat.js` file is the serverless route), and keep GitHub Pages as the public frontend.
+
+1. Import the project into Vercel and deploy it.
+2. In Vercel → Project → Settings → Environment Variables, add `OPENAI_API_KEY` with your private API key.
+3. Add `ALLOWED_ORIGIN` with the exact GitHub Pages origin, e.g. `https://YOUR-NAME.github.io` (no repository path and no trailing slash). If you use a custom domain, use that origin instead.
+4. Redeploy the Vercel project after adding environment variables.
+5. Edit `cbot-config.js` in your GitHub repository and set `window.CBOT_API_URL = 'https://YOUR-VERCEL-PROJECT.vercel.app/api/chat';` using your actual Vercel deployment URL. Commit the change.
+6. Keep the API key only in Vercel environment variables. Never put it in `cbot-config.js` or any frontend file.
+
+If the Vercel backend is not configured, C-BOT falls back to the built-in offline practice responses. A real AI response requires a valid API key and may incur API charges.
