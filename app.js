@@ -129,7 +129,7 @@ function nextReviewDays(){const dues=state.mistakes.map(m=>(state.srs[srsKey(m)]
 function sayItem(p){return {type:"say",prompt:`Say "${p.en}" aloud`,hint:"Pronunciation practice",answer:p.en,explanation:`${p.en} = ${p.odia}.`,say:p.en};}
 function sayLineItem(t){return {type:"say",prompt:`Say "${t.en}" aloud`,hint:"Say the whole sentence clearly",answer:t.en,explanation:`${t.en} = ${t.odia}`,say:t.en,threshold:.72};}
 /* ---------------- Talking robot ---------------- */
-let robotPending=null,robotSpeaking=false,robotTyping=false;
+let robotPending=null,robotSpeaking=false,robotTyping=false,robotGen=0;
 const robotEl=()=>document.querySelector(".robot");
 function setTalk(){const b=robotEl();if(b)b.classList.toggle("talk",robotSpeaking||robotTyping);}
 function typeText(el,text,speed,done){
@@ -144,10 +144,11 @@ function speakRobot(text,lang,next){
     let voice=vs.find(x=>x.lang===lang)||vs.find(x=>x.lang.toLowerCase().startsWith(lang.slice(0,2).toLowerCase()));
     if(!voice&&lang==="or-IN"){if(next)next();return;}   // no Odia voice on this device: text only
     if(!voice)voice=vs.find(x=>/^en/i.test(x.lang));
+    const gen=++robotGen;                       // a newer line cancels this chain
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=lang==="or-IN"?.9:1;u.pitch=1.4;if(voice&&typeof SpeechSynthesisVoice!=="undefined"&&voice instanceof SpeechSynthesisVoice)u.voice=voice;
     u.onstart=()=>{robotSpeaking=true;setTalk();AudioKit.duck(true);};
-    u.onend=u.onerror=()=>{robotSpeaking=false;setTalk();AudioKit.duck(false);if(next)next();};
+    u.onend=u.onerror=()=>{robotSpeaking=false;setTalk();AudioKit.duck(false);if(next&&gen===robotGen)next();};
     speechSynthesis.speak(u);
   }catch{if(next)next();}}
 /* A line is [English, Odia, Hindi]. It types the chosen language and says it in that language. */
