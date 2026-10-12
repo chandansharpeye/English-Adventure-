@@ -20,9 +20,9 @@ function norm(s){return String(s).toLowerCase().replace(/[’‘`]/g,"'").replac
 /* ---------------- State ---------------- */
 const freshState=()=>({xp:0,hearts:5,streak:0,lastActive:null,completed:[],dailyCompleted:0,dailyDate:null,bestAccuracy:0,totalAnswered:0,totalCorrect:0,mode:"odia-en",wordIndex:0,
   wordDate:null,dailyGoal:1,dailyBonusDate:null,activeDays:[],mistakes:[],wordsSeen:[],badges:[],heartTime:0,heartDay:null,perfectCount:0,bestCombo:0,speedBest:0,mistakesFixed:0,
-  stories:[],srs:{},profile:{name:"",age:"",source:"",reason:"",level:"",daily:"",tourDone:false},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
+  stories:[],unanswered:[],srs:{},profile:{name:"",age:"",source:"",reason:"",level:"",daily:"",tourDone:false},settings:{robotVoice:true,robotLang:"en",sound:true,music:true,autoRead:true,theme:"auto",musicVol:.4,sfxVol:.6,bannerDismissed:false}});
 function sanitize(m){const f=freshState();
-  ["completed","activeDays","mistakes","wordsSeen","badges","stories"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
+  ["completed","activeDays","mistakes","wordsSeen","badges","stories","unanswered"].forEach(k=>{if(!Array.isArray(m[k]))m[k]=f[k];});
   if(!m.srs||typeof m.srs!=="object")m.srs={};
   m.profile={...f.profile,...(m.profile&&typeof m.profile==="object"?m.profile:{})};
   ["xp","hearts","streak","dailyCompleted","bestAccuracy","totalAnswered","totalCorrect","wordIndex","dailyGoal","heartTime","perfectCount","bestCombo","speedBest","mistakesFixed"].forEach(k=>{if(typeof m[k]!=="number"||!isFinite(m[k]))m[k]=f[k];});
@@ -446,6 +446,57 @@ BADGES.push({id:"story1",icon:"📖",name:"Storyteller",desc:"Finish a story",te
             {id:"story3",icon:"🎬",name:"Story Master",desc:"Finish all 3 stories",test:x=>(x.stories||[]).length>=3});
 $("level-btn").addEventListener("click",startLevelTest);
 $("story-btn").addEventListener("click",openStories);
+
+
+/* ---------------- Ask C-BOT: doubt bank (works offline, no AI) ---------------- */
+const DOUBT_BANK=[
+ {k:["past","tense","yesterday","went"],en:"For yesterday or any finished past action, use the past tense. Go becomes went, and play becomes played.",or:"ଗତକାଲି କିମ୍ବା ଅତୀତର କାମ ପାଇଁ ଅତୀତ କାଳ ବ୍ୟବହାର କରନ୍ତୁ। Go → went, play → played।",hi:"कल या बीते समय के काम के लिए भूतकाल का प्रयोग करें। Go → went, play → played।"},
+ {k:["continuous","right now","present continuous","ing"],en:"For an action happening now, use is, am or are with verb-ing. Example: I am reading a book.",or:"ଏବେ ହେଉଥିବା କାମ ପାଇଁ is, am, are ସହ verb-ing ବ୍ୟବହାର କରନ୍ତୁ। ଉଦାହରଣ: I am reading a book.",hi:"अभी हो रहे काम के लिए is, am, are के साथ verb-ing लगाएँ। उदाहरण: I am reading a book."},
+ {k:["have","has","own","possession"],en:"Use have with I, you, we and they. Use has with he, she and it. Example: She has a red bag.",or:"I, you, we, they ସହ have ଓ he, she, it ସହ has ବ୍ୟବହାର କରନ୍ତୁ। ଉଦାହରଣ: She has a red bag.",hi:"I, you, we, they के साथ have और he, she, it के साथ has लगाएँ। उदाहरण: She has a red bag."},
+ {k:["article","articles","a or an","a or the"],en:"Use a before consonant sounds (a book), an before vowel sounds (an apple), and the for a specific thing (the sun).",or:"ବ୍ୟଞ୍ଜନ ଧ୍ୱନିରେ a (a book), ସ୍ୱର ଧ୍ୱନିରେ an (an apple), ଓ ନିର୍ଦ୍ଦିଷ୍ଟ ଜିନିଷ ପାଇଁ the (the sun)।",hi:"व्यंजन ध्वनि से पहले a (a book), स्वर ध्वनि से पहले an (an apple), और किसी खास चीज़ के लिए the (the sun)।"},
+ {k:["plural","plurals","plural form"],en:"Most nouns add -s: book becomes books. Words ending in y change to -ies: city becomes cities. Child becomes children.",or:"ଅଧିକାଂଶ ଶବ୍ଦରେ -s ଯୋଡ଼ନ୍ତୁ: book → books। y ରେ ଶେଷ ଶବ୍ଦରେ -ies: city → cities।",hi:"ज़्यादातर शब्दों में -s लगाएँ: book → books। y से खत्म होने वाले शब्द -ies लेते हैं: city → cities।"},
+ {k:["preposition","prepositions","in or on","on or at","at or in"],en:"Use at for exact times (at 5 pm), on for days (on Monday), and in for months, years and parts of the day (in May, in the morning).",or:"ସଠିକ ସମୟ ପାଇଁ at (at 5 pm), ଦିନ ପାଇଁ on (on Monday), ମାସ, ବର୍ଷ ଓ ଦିନର ଭାଗ ପାଇଁ in (in May)।",hi:"सटीक समय के लिए at (at 5 pm), दिन के लिए on (on Monday), और महीने, साल व दिन के हिस्से के लिए in (in May)।"},
+ {k:["negative","not","don't","doesn't","do not"],en:"For negatives, use do not or does not with the base verb. Example: I do not like it. She does not like it.",or:"Negative ପାଇଁ do not ବା does not ସହ base verb ବ୍ୟବହାର କରନ୍ତୁ। ଉଦାହରଣ: She does not like it.",hi:"नकारात्मक वाक्य के लिए do not या does not के साथ मूल क्रिया लगाएँ। उदाहरण: She does not like it."},
+ {k:["sentence","order","subject","structure"],en:"English sentences usually go Subject, Verb, Object. Example: I eat rice. Try the Build It lesson to practise.",or:"ଇଂରାଜୀ ବାକ୍ୟ ସାଧାରଣତଃ Subject, Verb, Object କ୍ରମରେ ଥାଏ। ଉଦାହରଣ: I eat rice.",hi:"अंग्रेज़ी वाक्य आम तौर पर Subject, Verb, Object के क्रम में होते हैं। उदाहरण: I eat rice."},
+ {k:["pronounce","pronunciation","accent"],en:"Tap the speaker to hear a word, use the turtle for slow speech, then repeat it aloud. Use the mic to check your pronunciation.",or:"ଶବ୍ଦ ଶୁଣିବା ପାଇଁ 🔊 ଦବାନ୍ତୁ, ଧୀରେ ଶୁଣିବା ପାଇଁ 🐢, ତା'ପରେ ଜୋରରେ ପୁନରାବୃତ୍ତି କରନ୍ତୁ। ମାଇକ୍ ଦେଇ ଉଚ୍ଚାରଣ ଯାଞ୍ଚ କରନ୍ତୁ।",hi:"शब्द सुनने के लिए 🔊 दबाइए, धीमा सुनने के लिए 🐢, फिर ज़ोर से दोहराइए। माइक से उच्चारण जाँचिए।"},
+ {k:["how many hearts","hearts","heart","lives"],en:"You have 5 hearts. You lose one on a wrong answer in a lesson. A heart comes back every 20 minutes, or you can refill one for 30 XP.",or:"ଆପଣଙ୍କ ପାଖରେ 5ଟି ହୃଦୟ ଅଛି। ପାଠରେ ଭୁଲ ଉତ୍ତର ଦେଲେ ଗୋଟିଏ ଯାଏ। 20 ମିନିଟ୍ ରେ ଫେରେ, କିମ୍ବା 30 XP ରେ କିଣି ପାରିବେ।",hi:"आपके पास 5 दिल हैं। पाठ में गलत जवाब पर एक कम होता है। हर 20 मिनट में एक वापस आता है, या 30 XP में खरीद सकते हैं।"},
+ {k:["xp","points","score","earn"],en:"You earn XP for correct answers, finished lessons and daily goals. Your XP decides your rank.",or:"ସଠିକ ଉତ୍ତର, ପାଠ ଶେଷ ଓ ଦୈନିକ ଲକ୍ଷ୍ୟ ପାଇଁ XP ମିଳେ। XP ରୁ ଆପଣଙ୍କ ରାଙ୍କ ସ୍ଥିର ହୁଏ।",hi:"सही जवाब, पाठ पूरा करने और रोज़ के लक्ष्य पर XP मिलता है। XP से आपकी रैंक तय होती है।"},
+ {k:["streak","every day","daily","miss"],en:"Practise at least once a day to keep your streak. The streak counts the days you practise in a row.",or:"ଷ୍ଟ୍ରିକ୍ ରଖିବା ପାଇଁ ଅତି କମରେ ରୋଜ ଏକ ଥର ଅଭ୍ୟାସ କରନ୍ତୁ। ଷ୍ଟ୍ରିକ୍ ଲଗାତାର ଦିନ ଗଣେ।",hi:"स्ट्रीक बनाए रखने के लिए रोज़ कम से कम एक बार अभ्यास करें। स्ट्रीक लगातार दिनों को गिनती है।"},
+ {k:["level test","which level","start level","my level"],en:"Use the Level Test in the practice zone to find your starting level. You can also choose your level in the welcome tour.",or:"ଆପଣଙ୍କ ଶୁରୁ ସ୍ତର ଜାଣିବା ପାଇଁ ଅଭ୍ୟାସ ଜୋନ୍ ରେ Level Test ବ୍ୟବହାର କରନ୍ତୁ।",hi:"अपना शुरुआती स्तर जानने के लिए अभ्यास क्षेत्र में Level Test लें।"},
+ {k:["mistake","mistakes","notebook","review","wrong"],en:"Wrong answers go to the Mistakes Notebook. They come back for review after a set gap, so you remember them.",or:"ଭୁଲ ଉତ୍ତର Mistakes Notebook ରେ ଯାଏ। ନିର୍ଦ୍ଦିଷ୍ଟ ସମୟ ପରେ ସେଗୁଡ଼ିକ ପୁଣି ଆସେ।",hi:"गलत जवाब Mistakes Notebook में जाते हैं। तय समय के बाद वे दोबारा आते हैं, ताकि आप उन्हें याद रखें।"},
+ {k:["c bot","cbot","robot","your name","who are you"],en:"I am C-BOT, a robot made with technology by Chandan. My real master is Chandan.",or:"ମୁଁ C-BOT, ଚନ୍ଦନଙ୍କ ଦ୍ୱାରା ଟେକ୍ନୋଲୋଜି ସହ ତିଆରି ଏକ ରୋବଟ୍। ମୋର ଅସଲ ମାଲିକ ଚନ୍ଦନ।",hi:"मैं C-BOT हूँ, चंदन द्वारा तकनीक से बना एक रोबोट। मेरे असली मालिक चंदन हैं।"},
+ {k:["who made","made you","created","developer","owner","chandan"],en:"O-E Adventure was made by Chandan, with technology, to help you learn English.",or:"O-E Adventure ଚନ୍ଦନ ଦ୍ୱାରା ଟେକ୍ନୋଲୋଜି ସହ ଇଂରାଜୀ ଶିଖିବାରେ ସାହାଯ୍ୟ ପାଇଁ ତିଆରି ହୋଇଛି।",hi:"O-E Adventure को चंदन ने तकनीक से बनाया है, ताकि आप अंग्रेज़ी सीखने में मदद पा सकें।"},
+ {k:["offline","internet","wifi","data"],en:"Lessons, flashcards and stories work offline. Voice checking needs internet on some browsers.",or:"ପାଠ, ଫ୍ଲାଶକାର୍ଡ ଓ କାହାଣୀ ଅଫଲାଇନ୍ ରେ ଚାଲେ। କିଛି ବ୍ରାଉଜରରେ ଭଏସ୍ ଯାଞ୍ଚ ପାଇଁ ଇଣ୍ଟରନେଟ୍ ଲାଗେ।",hi:"पाठ, फ्लैशकार्ड और कहानियाँ ऑफ़लाइन चलते हैं। कुछ ब्राउज़र में आवाज़ जाँच के लिए इंटरनेट चाहिए।"},
+ {k:["meaning","mean","translate","translation"],en:"To see a word's meaning, use Flashcards or the Odia and English mode. For sentences, try Translation Mastery.",or:"ଶବ୍ଦର ଅର୍ଥ ଜାଣିବା ପାଇଁ Flashcards ବା ଓଡ଼ିଆ-ଇଂରାଜୀ ମୋଡ୍ ବ୍ୟବହାର କରନ୍ତୁ। ବାକ୍ୟ ପାଇଁ Translation Mastery ଦେଖନ୍ତୁ।",hi:"शब्द का अर्थ जानने के लिए Flashcards या ओड़िया-अंग्रेज़ी मोड लें। वाक्य के लिए Translation Mastery देखें।"},
+ {k:["hello","hi","hey","namaste"],en:"Hello! Ask me any English doubt about tenses, articles, plurals, pronunciation or the app.",or:"ନମସ୍କାର! tenses, articles, plural, pronunciation କିମ୍ବା ଆପ ବିଷୟରେ ପଚାରନ୍ତୁ।",hi:"नमस्ते! tenses, articles, plural, pronunciation या ऐप के बारे में कोई भी सवाल पूछिए।"},
+ {k:["thank","thanks","thank you"],en:"You are welcome! Keep practising a little every day.",or:"ସ୍ୱାଗତ! ପ୍ରତିଦିନ ଟିକିଏ ଅଭ୍ୟାସ ଜାରି ରଖନ୍ତୁ।",hi:"आपका स्वागत है! रोज़ थोड़ा अभ्यास जारी रखिए।"}
+];
+const DOUBT_FALLBACK=["I am not sure about that yet. Try asking about tenses, articles, plurals, pronunciation, hearts or XP.","ଏ ବିଷୟରେ ମୁଁ ଏବେ ନିଶ୍ଚିତ ନୁହେଁ। tenses, articles, plural, pronunciation, hearts କିମ୍ବା XP ବିଷୟରେ ପଚାରନ୍ତୁ।","इस बारे में मुझे अभी पक्का पता नहीं है। tenses, articles, plural, pronunciation, hearts या XP के बारे में पूछिए।"];
+function answerDoubt(q){
+  const t=" "+norm(q)+" ";let best=null,bs=0;
+  DOUBT_BANK.forEach(e=>{const sc=e.k.filter(k=>t.includes(" "+norm(k)+" ")).length;if(sc>bs){bs=sc;best=e;}});
+  return best?{ok:true,line:[best.en,best.or,best.hi]}:{ok:false,line:DOUBT_FALLBACK};}
+function askRobot(q){
+  q=(q||"").trim();if(!q)return;
+  const r=answerDoubt(q);
+  if(!r.ok){state.unanswered.push(q.slice(0,120));state.unanswered=state.unanswered.slice(-30);saveState();}
+  const area=$("ask-answer");if(area)typeText(area,r.line[{en:0,or:1,hi:2}[robotLangNow()]],20);
+  robotTalk(r.line);}
+function openAsk(){
+  openSheet("Ask C-BOT 🤖",`<p class="muted">Type or speak your doubt. C-BOT answers in text and voice.</p>
+    <div class="ask-row"><input id="ask-input" class="type-input" placeholder="e.g. When do I use has?" maxlength="120" aria-label="Your doubt"></div>
+    <div class="result-actions left">${SR_CLASS?'<button class="secondary-btn" id="ask-mic">🎤 Speak</button>':""}<button class="primary-btn" id="ask-go">Ask</button></div>
+    <div class="ask-answer" id="ask-answer"></div>`);
+  const inp=$("ask-input");
+  $("ask-go").addEventListener("click",()=>askRobot(inp.value));
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter")askRobot(inp.value);});
+  const mic=$("ask-mic");
+  if(mic)mic.addEventListener("click",async()=>{mic.disabled=true;mic.textContent="🎙️ Listening…";
+    try{const alts=await listenOnce();inp.value=alts[0];askRobot(alts[0]);}
+    catch(err){showToast(voiceErrorText(err));}
+    finally{mic.disabled=false;mic.textContent="🎤 Speak";}});
+  setTimeout(()=>{try{inp.focus();}catch{}},120);}
+$("ask-btn").addEventListener("click",openAsk);
 
 /* ---------------- Sessions ---------------- */
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}

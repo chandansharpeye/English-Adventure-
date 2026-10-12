@@ -234,3 +234,7 @@ button,.chip,.unit-btn{touch-action:manipulation}
 [data-theme="dark"] .story-card{background:#1c1936}
 .opt-tr{display:block;margin-top:2px;font-family:"Noto Sans Oriya","Noto Sans Devanagari",Nunito,sans-serif;font-size:12px;font-weight:700;color:#5b4fd0}
 [data-theme="dark"] .opt-tr{color:#b5a9ff}
+.ask-row{margin-top:10px}
+.ask-row .type-input{max-width:none}
+.ask-answer{min-height:70px;margin-top:14px;padding:14px 16px;border-radius:16px;background:#f1efff;font-size:15px;font-weight:800;line-height:1.5;color:var(--ink)}
+[data-theme="dark"] .ask-answer{background:#26224a}
