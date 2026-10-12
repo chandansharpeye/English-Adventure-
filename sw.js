@@ -1,6 +1,6 @@
-const CACHE_NAME = "oe-adventure-v6";
+const CACHE_NAME = "oe-adventure-v7";
 const APP_FILES = [
-  "./", "./index.html", "./offline.html", "./styles.css", "./audio.js", "./data.js", "./app.js", "./adventure-lab.js", "./manifest.json",
+  "./", "./index.html", "./offline.html", "./styles.css", "./audio.js", "./data.js", "./app.js", "./adventure-lab.js", "./v2-upgrade.js", "./manifest.json",
   "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-maskable-192.png",
   "./icon-maskable-512.png", "./apple-touch-icon.png", "./favicon-32.png"
 ];
