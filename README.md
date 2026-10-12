@@ -1,4 +1,4 @@
-# Odia to English Adventure (O-E Adventure) — complete PWA (Android · iPhone · PC)
+# O-E Adventure — complete PWA (Android · iPhone · PC)
 
 Installable, offline-ready English learning game with music, sound effects and voice.
 A PWA installs **only from a website that uses https://**, so first put these files online (free, 5 minutes), then install from that link.
@@ -7,7 +7,7 @@ A PWA installs **only from a website that uses https://**, so first put these fi
 
 **A. Netlify Drop (easiest, no coding)**
 1. Unzip this file. Open https://app.netlify.com/drop
-2. Drag the whole `English-Adventure` folder onto the page. You get an `https://….netlify.app` link.
+2. Drag the whole `O-E-Adventure` folder onto the page. You get an `https://….netlify.app` link.
 
 **B. GitHub Pages**
 1. Create a **Public** repository, upload every file (index.html must be at the top level, not inside another folder).
@@ -23,7 +23,7 @@ A PWA installs **only from a website that uses https://**, so first put these fi
 | **Android (Chrome)** | Open the link → tap **📲 Install app** (or ⋮ → Install app) |
 | **iPhone / iPad** | Open the link in **Safari** → Share ⬆️ → **Add to Home Screen** (iOS has no install popup; this is the only way) |
 | **Windows / Mac / Linux** | Chrome or Edge → install icon ⊕ in the address bar → Install |
-| **Windows without a website** | Run `English-Adventure-Setup.bat` (separate file) |
+| **Windows without a website** | Run `O-E-Adventure-Setup.bat` (separate file) |
 
 Tap **📲 Install app** inside the game to see an **Install check** (https, manifest, offline engine). If one line shows ❌, that is the reason it will not install.
 

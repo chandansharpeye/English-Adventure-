@@ -888,7 +888,7 @@ function installHelp(){
   else if(isIOS())body=`<ol class="steps"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button ⬆️.</li><li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol>`;
   else if(isAndroid())body=`<ol class="steps"><li>Open this page in <b>Chrome</b>.</li><li>Tap the <b>⋮</b> menu at the top right.</li><li>Tap <b>Install app</b> (or <b>Add to Home screen</b>).</li></ol>`;
   else body=`<ol class="steps"><li><b>Chrome:</b> click the install icon ⊕ at the right end of the address bar, or ⋮ → <b>Cast, save and share → Install page as app</b>.</li><li><b>Edge:</b> ⋯ → <b>Apps → Install this site as an app</b>.</li></ol>`;
-  openSheet("Install Odia to English Adventure",body+`<div class="checks" id="pwa-checks"><b>Install check</b><span>Checking…</span></div><p class="muted">Not showing? Reload the page once, wait 5 seconds, and try again. The site must be opened with <b>https://</b>.</p>`);
+  openSheet("Install O-E Adventure",body+`<div class="checks" id="pwa-checks"><b>Install check</b><span>Checking…</span></div><p class="muted">Not showing? Reload the page once, wait 5 seconds, and try again. The site must be opened with <b>https://</b>.</p>`);
   if(location.protocol!=="file:")pwaStatus().then(rows=>{const box=$("pwa-checks");if(box)box.innerHTML="<b>Install check</b>"+rows.map(([ok,t])=>`<span class="${ok?"ok":"bad"}">${ok===true?"✅":ok===false?"❌":"⬜"} ${t}</span>`).join("");});}
 async function pwaStatus(){
   const rows=[[window.isSecureContext,"Secure connection (https)"]];let man=false,sw=false;

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#6558e8">
-  <meta name="description" content="Odia to English Adventure: learn English with Odia meanings, games, and a friendly robot teacher.">
+  <meta name="description" content="O-E Adventure: learn English through Odia, Hindi and English with games and a friendly robot teacher.">
   <title>O-E Adventure — Learn English by Playing</title>
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
@@ -20,8 +20,8 @@
 <body>
   <div class="splash" id="splash" aria-hidden="true"><img class="splash-img" src="splash.png" alt=""><div class="splash-name">O-E Adventure</div><div class="splash-sub">Learn English · ଇଂରାଜୀ · अंग्रेज़ी</div></div>
   <header class="topbar">
-    <a class="brand" href="#" aria-label="Odia to English Adventure home">
-      <span class="brand-mark">EA</span><span>Odia to English <b>Adventure</b></span>
+    <a class="brand" href="#" aria-label="O-E Adventure home">
+      <span class="brand-mark">O-E</span><span><b>O-E Adventure</b></span>
     </a>
     <div class="top-right">
       <div class="top-stats">
@@ -120,6 +120,11 @@
       </div>
     </section>
 
+    <section class="adventure-lab" id="adventure-lab" aria-label="C-BOT Training Arena">
+      <div class="lab-header"><div><p class="eyebrow">NEW GAME MODES</p><h2>C-BOT Training Arena</h2><p class="muted">A new multilingual practice zone is loading…</p></div></div>
+      <div id="lab-stage" class="lab-stage" aria-live="polite"></div>
+    </section>
+
     <section class="panel badges-panel">
       <div class="section-heading"><div><p class="eyebrow">YOUR TROPHIES</p><h2>Achievements</h2></div><span class="tiny-pill" id="badge-count">0 / 0</span></div>
       <div class="badge-grid" id="badge-grid"></div>
@@ -130,7 +135,7 @@
       <button class="round-btn" id="speak-word" aria-label="Hear the word">🔊</button>
       <button class="round-btn" id="new-word" aria-label="Show another word">↻</button>
     </section>
-    <footer><span>Odia to English Adventure · Learn a little every day.</span><span>Made for learners everywhere 🌍</span></footer>
+    <footer><span>O-E Adventure · Learn a little every day.</span><span>Made for learners everywhere 🌍</span></footer>
   </main>
 
   <div class="modal-backdrop hidden" id="lesson-modal" role="dialog" aria-modal="true" aria-labelledby="lesson-title">
@@ -163,5 +168,6 @@
   <script src="audio.js"></script>
   <script src="data.js"></script>
   <script src="app.js"></script>
+  <script src="adventure-lab.js"></script>
 </body>
 </html>

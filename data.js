@@ -82,7 +82,7 @@ const LEVELS = [
 ];
 
 /* ============================================================
-   English Adventure v2 — data additions
+   O-E Adventure — data additions
    Question helpers, vocabulary pairs, new lessons, words, badges
    ============================================================ */
 function q(prompt,hint,answer,options,explanation,extra){return Object.assign({type:"mcq",prompt,hint,answer,options,explanation},extra||{});}

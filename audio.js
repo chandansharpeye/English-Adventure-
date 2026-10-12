@@ -1,6 +1,6 @@
 "use strict";
 /* ============================================================
-   English Adventure — AudioKit
+   O-E Adventure — AudioKit
    A tiny generative "soft music" engine built on the Web Audio API.
    No audio files are needed, so it works offline and loads instantly.
    Calm pad chords (Cmaj7 · Am7 · Fmaj7 · G6) + gentle bell-like notes,
