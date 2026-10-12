@@ -104,6 +104,7 @@ function confetti(n){
     ps.forEach(p=>{p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);ctx.restore();});
     if(++f<110)requestAnimationFrame(tick);else{ctx.clearRect(0,0,c.width,c.height);c.classList.add("hidden");}})();}
 
+function acceptAnswer(item,v){return [item.answer,...(item.accept||[])].some(a=>norm(a)===norm(v));}
 /* ---------------- Pronunciation (speech recognition) ---------------- */
 const SR_CLASS=window.SpeechRecognition||window.webkitSpeechRecognition||null;
 function levenshtein(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let prev=Array.from({length:n+1},(_,j)=>j);
@@ -286,7 +287,7 @@ function render(){
 const TIER_COUNTS=[3,3,2,2];   // questions per level: beginner, elementary, intermediate, advanced
 function buildLevelTest(){
   const qs=[];
-  LEVELS.forEach((level,i)=>{
+  LEVELS.slice(0,TIER_COUNTS.length).forEach((level,i)=>{
     const pool=[];
     level.lessons.forEach(l=>{
       if(!l.auto)(l.questions||[]).forEach(q=>{if(q.type==="mcq")pool.push(clone(q));});
@@ -315,6 +316,76 @@ function finishLevelTest(){
   sfx(c>=7?"win":"lose");
   if(c>=7)confetti(90);
 }
+
+
+/* ---------------- Upgrade 2: Grammar and Translation mastery levels ---------------- */
+const MASTER_LEVELS=[
+ {id:"mastery-grammar",name:"Grammar Mastery",level:"LEVEL 5",icon:"📐",lessons:[
+  {id:"tenses-mastery",title:"Tenses Mastery",desc:"Simple, continuous and perfect",xp:35,questions:[
+   q("She ___ to school every day.","ପ୍ରତିଦିନ · ସରଳ ବର୍ତ୍ତମାନ","goes",["go","goes","going"],"Simple present with she/he/it adds -s: She goes."),
+   q("They ___ football right now.","ଏବେ ହେଉଥିବା କାମ","are playing",["play","are playing","played"],"Right now means an action in progress: are playing."),
+   q("I ___ my homework already.","ଏହିମାତ୍ର ସମାପ୍ତ","have finished",["finished","have finished","am finish"],"Already + finished action uses present perfect."),
+   q("We ___ here since 2020.","2020 ଠାରୁ · ଚାଲୁଛି","have lived",["live","have lived","lived"],"Since + starting point uses present perfect."),
+   q("He ___ a letter when I called.","ଯେତେବେଳେ ମୁଁ ଫୋନ୍ କଲି","was writing",["writes","was writing","has written"],"Action in progress at a past moment: was writing.")]},
+  {id:"articles-prepositions",title:"Articles & Prepositions",desc:"a, an, the and in, on, at",xp:35,questions:[
+   q("She is ___ engineer.","ସ୍ୱର ଧ୍ୱନିରେ ଶୁରୁ","an",["a","an","the"],"Use 'an' before a vowel sound: an engineer."),
+   q("The meeting is ___ Monday.","ଦିନ ପାଇଁ","on",["in","on","at"],"Days of the week take 'on': on Monday."),
+   q("We arrived ___ the airport at noon.","ସ୍ଥାନ ଓ ସମୟ","at",["in","on","at"],"'At' is used for a point place and time: at the airport, at noon."),
+   q("I live ___ India.","ବଡ଼ ଦେଶ ବା ଅଞ୍ଚଳ","in",["at","on","in"],"Countries and big areas take 'in'."),
+   q("This is ___ best day of my life.","ଏକ ହିଁ ବିଶେଷ","the",["a","an","the"],"Use 'the' with superlatives: the best.")]},
+  {id:"conditionals-modals",title:"Conditionals & Modals",desc:"If, would, will, must, might",xp:40,questions:[
+   q("If I had time, I ___ travel more.","ଯଦି ସମୟ ଥାଏ","would",["will","would","did"],"Second conditional (imaginary now): would + verb."),
+   q("If it rains, we ___ stay home.","ଯଦି ବର୍ଷା ହୁଏ","will",["would","will","had"],"First conditional (real future): will + verb."),
+   q("You ___ wear a helmet on a bike.","ନିୟମ · ଜରୁରୀ","must",["might","must","could"],"Must shows a strong rule or need."),
+   q("I ___ be late. Please start without me.","ସମ୍ଭାବନା","might",["must","might","shall"],"Might shows a possibility, not certainty."),
+   q("Could you ___ the door, please?","ଅନୁରୋଧ","close",["closed","close","closing"],"After a modal, use the base verb: close.")]},
+  {id:"reported-passive",title:"Reported Speech & Passive",desc:"Professional sentences",xp:40,questions:[
+   q("He said, 'I am busy.' → He said that he ___ busy.","ବକ୍ତବ୍ୟ · ଅତୀତ","was",["is","was","were"],"In reported speech, am/is move back to was."),
+   q("The letter ___ yesterday.","ଅତୀତ · ପାସିଭ୍","was sent",["sent","was sent","is send"],"Passive past: was/were + past participle."),
+   q("She asked, 'Where do you live?' → She asked where I ___.","ପ୍ରଶ୍ନ · ବକ୍ତବ୍ୟ","lived",["live","lived","living"],"Questions in reported speech change to past too."),
+   q("English ___ in many countries.","ପାସିଭ୍ · ବର୍ତ୍ତମାନ","is spoken",["speaks","is spoken","spoke"],"Passive present: is + past participle."),
+   q("The report ___ by Friday.","ଜରୁରୀ · ପାସିଭ୍","must be finished",["must finish","must be finished","must finished"],"Modal + be + past participle for passive.")]},
+  {id:"grammar-boss",title:"Grammar Boss",desc:"Mixed grammar test",xp:60,questions:[
+   q("Choose the correct sentence.","ସଠିକ୍ ବାକ୍ୟ","He doesn't like it.",["He don't like it.","He doesn't like it.","He doesn't likes it."],"With he/she/it, use doesn't + base verb."),
+   q("Which is correct?","ଅବଧି · for ଓ since","I have been here for two years.",["I am here since two years.","I have been here for two years.","I have been here since two years."],"Use 'for' with a period of time: for two years."),
+   arr("ସେ ସବୁବେଳେ ସତ କହେ।","She always tells the truth.",["tell"],"Adverb 'always' goes before the main verb."),
+   typ("Type the past tense of 'go'.","ଅତୀତ କାଳ","went","Go → went (irregular)."),
+   q("Choose the correct word: The children ___ playing outside.","ବହୁବଚନ","are",["is","are","am"],"Plural subject 'children' takes 'are'."),
+   arr("ମୁଁ କାଲି ଏକ ବହି ପଢ଼ିଲି।","I read a book yesterday.",["has"],"Yesterday means simple past: read.")]}
+ ]},
+ {id:"mastery-translation",name:"Translation Mastery",level:"LEVEL 6",icon:"🌐",lessons:[
+  {id:"office-phrases",title:"Office Phrases",desc:"Meetings, emails and deadlines",xp:35,questions:[
+   q("Choose the Odia meaning: 'I will send you the report today.'","ଅଫିସ୍ · ଇମେଲ୍","ମୁଁ ଆଜି ଆପଣଙ୍କୁ ରିପୋର୍ଟ ପଠାଇବି।",["ମୁଁ ଆଜି ଆପଣଙ୍କୁ ରିପୋର୍ଟ ପଠାଇବି।","ମୁଁ କାଲି ଏକ ଚିଠି ଲେଖିବି।","ସେ ଆଜି ଘରକୁ ଯିବ।"],"'Send the report' means ରିପୋର୍ଟ ପଠାଇବା."),
+   q("Choose the Odia meaning: 'Thank you for your time.'","ଧନ୍ୟବାଦ · ଅଫିସ୍","ଆପଣଙ୍କ ସମୟ ପାଇଁ ଧନ୍ୟବାଦ।",["ଆପଣଙ୍କ ଘର କେଉଁଠି?","ଆପଣଙ୍କ ସମୟ ପାଇଁ ଧନ୍ୟବାଦ।","ମୋ ଗାଡ଼ି ଖରାପ ଅଛି।"],"A polite phrase used after a meeting or call."),
+   q("Choose the Odia meaning: 'Please call me back later.'","ଫୋନ୍ · ଅନୁରୋଧ","ଦୟାକରି ପରେ ମୋତେ ଫୋନ୍ କରନ୍ତୁ।",["ମୋ ନାମ ରୀନା।","ଆଜି ବର୍ଷା ହେଉଛି।","ଦୟାକରି ପରେ ମୋତେ ଫୋନ୍ କରନ୍ତୁ।"],"'Call back' means ପରେ ଫୋନ୍ କରିବା."),
+   q("Choose the Odia meaning: 'The deadline is next Monday.'","ସମୟସୀମା","ଶେଷ ତାରିଖ ପରବର୍ତ୍ତୀ ସୋମବାର।",["ଆଜି ଛୁଟି ଅଛି।","ଶେଷ ତାରିଖ ପରବର୍ତ୍ତୀ ସୋମବାର।","ସେ ଏକ ଭଲ ଶିକ୍ଷକ।"],"Deadline means the last date to finish something."),
+   q("Choose the Odia meaning: 'Let's discuss this in the meeting.'","ବୈଠକ","ଆସନ୍ତୁ ଏହାକୁ ବୈଠକରେ ଆଲୋଚନା କରିବା।",["ଆସନ୍ତୁ ଏହାକୁ ଖାଇବା।","ସେ ଦୌଡ଼ିବ।","ଆସନ୍ତୁ ଏହାକୁ ବୈଠକରେ ଆଲୋଚନା କରିବା।"],"Discuss means ଆଲୋଚନା କରିବା.")]},
+  {id:"reverse-odia",title:"Odia to English",desc:"Choose the English meaning",xp:35,questions:[
+   q("What is the English for: ମୁଁ ଇଂରାଜୀ ପଢ଼େ।","ଓଡ଼ିଆ → ଇଂରାଜୀ","I study English.",["I eat rice.","I study English.","She reads a book."],"ପଢ଼େ here means study."),
+   q("What is the English for: ସେ କାମ କରୁଛି।","ଏବେ ହେଉଥିବା କାମ","She is working.",["She is sleeping.","She is working.","He works here."],"କରୁଛି means is doing, so use is working."),
+   q("What is the English for: ଆପଣ କେମିତି ଅଛନ୍ତି?","ଅଭିବାଦନ","How are you?",["Where are you?","How are you?","What is this?"],"A common greeting question."),
+   q("What is the English for: ମୋର ଗୋଟିଏ ଭଉଣୀ ଅଛି।","ପରିବାର","I have a sister.",["I want a sister.","My sister is tall.","I have a sister."],"ଅଛି means have."),
+   q("What is the English for: ଆମେ କାଲି ସ୍କୁଲ ଗଲୁ।","ଅତୀତ","We went to school yesterday.",["We go to school today.","We will go to school.","We went to school yesterday."],"Yesterday means simple past: went.")]},
+  {id:"sentence-translation",title:"Sentence Translation",desc:"Type the English sentence",xp:40,questions:[
+   typ("Type the English: ମୁଁ ପ୍ରତିଦିନ ପାଣି ପିଏ।","ଓଡ଼ିଆ → ଇଂରାଜୀ · ଟାଇପ୍ କରନ୍ତୁ","I drink water every day.","Many answers are correct. Example: I drink water every day.",["I drink water daily."]),
+   typ("Type the English: ସେ ଭଲ ଗାଏ।","ଓଡ଼ିଆ → ଇଂରାଜୀ","She sings well.","She sings well.",["She sings nicely."]),
+   typ("Type the English: ଆମେ ଘରକୁ ଯାଉଛୁ।","ଏବେ ହେଉଥିବା କାମ","We are going home.","We are going home.",["We're going home."]),
+   typ("Type the English: ତୁମେ କେଉଁଠି ରୁହ?","ପ୍ରଶ୍ନ","Where do you live?","Where do you live?",["Where are you living?"]),
+   typ("Type the English: ମୋ ମା ରାନ୍ଧୁଛନ୍ତି।","ଏବେ ହେଉଥିବା କାମ","My mother is cooking.","My mother is cooking.",["My mom is cooking."])]},
+  {id:"hindi-english",title:"Hindi to English",desc:"Hindi sentences into English",xp:40,questions:[
+   q("What is the English for: मैं चाय पीता हूँ।","हिंदी → अंग्रेज़ी","I drink tea.",["I eat tea.","I drink tea.","I buy tea."],"पीता हूँ means drink."),
+   q("What is the English for: वह स्कूल जाती है।","हिंदी → अंग्रेज़ी","She goes to school.",["She goes to home.","He is at school.","She goes to school."],"जाती है means goes."),
+   q("What is the English for: कल बारिश होगी।","भविष्य","It will rain tomorrow.",["It rained yesterday.","It will rain tomorrow.","It is raining now."],"होगी shows future: will rain."),
+   q("What is the English for: आपका नाम क्या है?","प्रश्न","What is your name?",["Where is your house?","How old are you?","What is your name?"],"A basic question about a name."),
+   q("What is the English for: हम एक अच्छी किताब पढ़ रहे हैं।","चल रहा काम","We are reading a good book.",["We read a good book yesterday.","We are reading a good book.","We are writing a book."],"पढ़ रहे हैं means are reading.")]},
+  {id:"translation-boss",title:"Translation Boss",desc:"Mixed translation test",xp:60,questions:[
+   typ("Type the English: ସେ ଏକ ନୂଆ ଚାକିରି ପାଇଲା।","ଓଡ଼ିଆ → ଇଂରାଜୀ","She got a new job.","Both 'got' and 'found' work here.",["She found a new job."]),
+   q("Which is the best English for 'ଧନ୍ୟବାଦ'?","ଶବ୍ଦ ଅର୍ଥ","Thank you",["Sorry","Thank you","Hello"],"ଧନ୍ୟବାଦ means thank you."),
+   arr("ସେ ଏକ ଭଲ ଶିକ୍ଷିକା।","She is a good teacher.",["are"],"Use 'is' with she."),
+   q("What is the English for: आप कहाँ रहते हैं?","ପ୍ରଶ୍ନ","Where do you live?",["Where are you going?","Where do you live?","What do you live?"],"कहाँ रहते हैं means where do you live."),
+   typ("Type the English: ଆମେ ଶୀଘ୍ର ଦେଖା କରିବା।","ଭବିଷ୍ୟତ","We will meet soon.","We will meet soon.",["We'll meet soon."])]}
+]}];
+MASTER_LEVELS.forEach(l=>LEVELS.push(l));
 
 /* ---------------- Upgrade 2: Story time ---------------- */
 const STORIES=[
@@ -349,10 +420,24 @@ const STORIES=[
    {q:"What does the writer draw?",o:["A big flower","A house","A car"],a:"A big flower",e:"I make a card and draw a big flower."},
    {q:"What do they eat?",o:["Sweet cake","Rice","Fish"],a:"Sweet cake",e:"We sing a song and eat a sweet cake."}]}
 ];
+const STORY_QTR={
+ "rina-school":[
+  {or:{q:"କିଏ ସକାଳୁ ଶୀଘ୍ର ଉଠେ?",o:{"Rina":"ରୀନା","Her teacher":"ତା ଶିକ୍ଷକ","Her friend":"ତା ବନ୍ଧୁ"}},hi:{q:"सुबह जल्दी कौन उठता है?",o:{"Rina":"रीना","Her teacher":"उसकी शिक्षिका","Her friend":"उसकी सहेली"}}},
+  {or:{q:"ରୀନା କ'ଣ ଖାଏ?",o:{"Bread":"ରୁଟି","Rice":"ଭାତ","Fish":"ମାଛ"}},hi:{q:"रीना क्या खाती है?",o:{"Bread":"ब्रेड","Rice":"चावल","Fish":"मछली"}}},
+  {or:{q:"ରୀନା କେଉଁଠିକୁ ପାଦରେ ଯାଏ?",o:{"The market":"ବଜାର","The park":"ପାର୍କ","School":"ସ୍କୁଲ୍"}},hi:{q:"रीना पैदल कहाँ जाती है?",o:{"The market":"बाज़ार","The park":"पार्क","School":"स्कूल"}}}],
+ "raju-market":[
+  {or:{q:"ରାଜୁ କ'ଣ କିଣେ?",o:{"A red apple and a banana":"ଗୋଟିଏ ଲାଲ ସେଓ ଓ କଦଳୀ","Rice and milk":"ଭାତ ଓ ଦୁଧ","Eggs and tea":"ଅଣ୍ଡା ଓ ଚା"}},hi:{q:"राजू क्या खरीदता है?",o:{"A red apple and a banana":"एक लाल सेब और केला","Rice and milk":"चावल और दूध","Eggs and tea":"अंडे और चाय"}}},
+  {or:{q:"ରାଜୁ କାହା ସହ ଯାଏ?",o:{"His father":"ତା ବାପା","His mother":"ତା ମା","His friend":"ତା ବନ୍ଧୁ"}},hi:{q:"राजू किसके साथ जाता है?",o:{"His father":"उसके पिता","His mother":"उसकी माँ","His friend":"उसका दोस्त"}}},
+  {or:{q:"ରାଜୁ ଦୋକାନୀଙ୍କୁ କ'ଣ କହେ?",o:{"Sorry":"ଦୁଃଖିତ","Hello":"ନମସ୍କାର","Thank you":"ଧନ୍ୟବାଦ"}},hi:{q:"राजू दुकानदार से क्या कहता है?",o:{"Sorry":"माफ़ कीजिए","Hello":"नमस्ते","Thank you":"धन्यवाद"}}}],
+ "birthday-cake":[
+  {or:{q:"ଆଜି କ'ଣ?",o:{"My mother's birthday":"ମାଙ୍କ ଜନ୍ମଦିନ","A school holiday":"ସ୍କୁଲ୍ ଛୁଟି","My birthday":"ମୋ ଜନ୍ମଦିନ"}},hi:{q:"आज क्या है?",o:{"My mother's birthday":"माँ का जन्मदिन","A school holiday":"स्कूल की छुट्टी","My birthday":"मेरा जन्मदिन"}}},
+  {or:{q:"ଲେଖକ କ'ଣ ଆଙ୍କନ୍ତି?",o:{"A big flower":"ଏକ ବଡ଼ ଫୁଲ","A house":"ଏକ ଘର","A car":"ଏକ ଗାଡ଼ି"}},hi:{q:"लेखक क्या बनाता है?",o:{"A big flower":"एक बड़ा फूल","A house":"एक घर","A car":"एक कार"}}},
+  {or:{q:"ସେମାନେ କ'ଣ ଖାଆନ୍ତି?",o:{"Sweet cake":"ମିଠା କେକ୍","Rice":"ଭାତ","Fish":"ମାଛ"}},hi:{q:"वे क्या खाते हैं?",o:{"Sweet cake":"मीठा केक","Rice":"चावल","Fish":"मछली"}}}]
+};
 function startStory(i){
   const st=STORIES[i];
   const reads=st.sentences.map((x,k)=>({type:"read",prompt:x.en,hint:`${st.title} · ${k+1} / ${st.sentences.length}`,answer:x.en,say:x.en,explanation:"",tr:{or:x.or,hi:x.hi}}));
-  const qs=st.questions.map(q=>({type:"mcq",prompt:q.q,hint:`${st.title} · Questions`,answer:q.a,options:shuffle(q.o.slice()),explanation:q.e}));
+  const qs=st.questions.map((q,j)=>{const t=STORY_QTR[st.id][j];return {type:"mcq",prompt:q.q,hint:`${st.title} · Questions`,answer:q.a,options:shuffle(q.o.slice()),explanation:q.e,tr:{or:t.or.q,hi:t.hi.q},optTr:{or:t.or.o,hi:t.hi.o}};});
   startSession({kind:"story",title:st.title,icon:st.emoji,kicker:"STORY TIME",questions:[...reads,...qs],storyIndex:i,restart:()=>startStory(i)});}
 function openStories(){
   openSheet("Story Time 📖",`<p class="muted">Read each sentence, listen to it, then answer 3 questions.</p>`+STORIES.map((st,i)=>`<button class="story-card" data-i="${i}"><span class="story-emoji">${st.emoji}</span><span><b>${esc(st.title)}</b><small>${state.stories.includes(st.id)?"✅ Finished · replay for 5 XP":"4 sentences · 3 questions · +25 XP"}</small></span></button>`).join(""));
@@ -408,7 +493,8 @@ function renderQuestion(){
   else if(item.type==="say")buildSay(item);
   if(s.timed)startTimer();}
 function buildChoices(item){const list=$("answer-area");list.className="answer-list";
-  shuffle(item.options.slice()).forEach((choice,i)=>{const b=el("button","answer-option");b.dataset.value=choice;b.innerHTML=`<span class="key">${i+1}</span><span>${esc(choice)}</span>`;
+  const otr=item.optTr?item.optTr[robotLangNow()==="hi"?"hi":"or"]:null;
+  shuffle(item.options.slice()).forEach((choice,i)=>{const b=el("button","answer-option");b.dataset.value=choice;b.innerHTML=`<span class="key">${i+1}</span><span>${esc(choice)}${otr&&otr[choice]?`<small class="opt-tr">${esc(otr[choice])}</small>`:""}</span>`;
     b.addEventListener("click",()=>selectAnswer(b,choice));list.appendChild(b);});}
 function selectAnswer(button,choice){const s=session;if(s.answered)return;sfx("click");
   document.querySelectorAll(".answer-option").forEach(b=>b.classList.remove("selected"));button.classList.add("selected");s.selected=choice;$("check-btn").disabled=false;}
@@ -519,7 +605,7 @@ function onPrimary(){const s=session;if(!s||s.done)return;
   const item=s.item;
   if(item.type==="read"){advance();return;}
   if(item.type==="mcq"||item.type==="listen"){if(s.selected==null)return;resolve(s.selected===item.answer,item.answer,s.selected);}
-  else if(item.type==="type"){const v=$("type-input").value;if(!v.trim())return;resolve(norm(v)===norm(item.answer),item.answer,v);}
+  else if(item.type==="type"){const v=$("type-input").value;if(!v.trim())return;resolve(acceptAnswer(item,v),item.answer,v);}
   else if(item.type==="say"){if(!SR_CLASS){const v=($("type-input")||{}).value||"";if(!v.trim())return;resolve(norm(v)===norm(item.answer),item.answer,v);}}
   else if(item.type==="arrange"){if(!s.arranged.length)return;const user=s.arranged.map(i=>s.tokens[i]).join(" ");resolve(norm(user)===norm(item.answer),item.answer,user);}}
 function resolve(correct,correctText,userAnswer,opts){

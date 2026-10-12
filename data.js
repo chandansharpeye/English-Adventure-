@@ -91,7 +91,7 @@ function arr(hint,answer,extra,explanation){return {type:"arrange",prompt:"Put t
 // Listen and choose
 function lis(say,answer,options,explanation){return {type:"listen",prompt:"Tap 🔊 and choose what you hear",hint:"Listening practice",say,answer,options,explanation:explanation||("You heard: "+say)};}
 // Type the answer
-function typ(prompt,hint,answer,explanation){return {type:"type",prompt,hint,answer,explanation};}
+function typ(prompt,hint,answer,explanation,accept){return {type:"type",prompt,hint,answer,explanation,accept:accept||[]};}
 // Match pairs: pairs = [[english, odia], ...]
 function mat(pairs){return {type:"match",prompt:"Match the pairs",hint:"English ↔ Odia",pairs,answer:pairs.map(p=>p[0]+" = "+p[1]).join(", "),explanation:pairs.map(p=>p[0]+" = "+p[1]).join(" · ")};}
 
