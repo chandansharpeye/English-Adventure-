@@ -248,6 +248,10 @@ function renderTopStats(){
   const t=nextHeartText();$("top-hearts").parentElement.title=t?"Next heart in "+t:"Hearts remaining";
   $("sound-btn").textContent=state.settings.sound?"🔔":"🔕";
   const mb=$("music-btn");mb.classList.toggle("off",!state.settings.music);mb.title=state.settings.music?"Music on":"Music off";}
+/* ---------------- Polish: stars, floating text, shake ---------------- */
+function starsHTML(n){return [1,2,3].map(i=>`<span class="star${i<=n?" on":""}">★</span>`).join("");}
+function floatText(t,cls){const d=document.createElement("div");d.className="float-txt "+(cls||"");d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1100);}
+function shakeLesson(){const lc=document.querySelector(".lesson-content");if(!lc)return;lc.classList.remove("shake");void lc.offsetWidth;lc.classList.add("shake");}
 function render(){
   renderTopStats();
   $("stat-xp").textContent=state.xp;$("stat-streak").textContent=state.streak;$("stat-lessons").textContent=state.completed.length;
@@ -271,7 +275,7 @@ function render(){
     level.lessons.forEach(lesson=>{
       const done=state.completed.includes(lesson.id),unlocked=isUnlocked(lesson);
       const unit=el("div","unit"+(done?" completed":"")+(unlocked?"":" locked"));
-      unit.innerHTML=`<div class="unit-node">${done?"✓":level.icon}</div><div><p class="unit-title">${esc(lesson.title)}</p><p class="unit-description">${esc(lesson.desc)}</p><div class="unit-meta">${lessonCount(lesson)} questions · ${lesson.xp} XP</div></div><button class="unit-btn" ${unlocked?"":"disabled"}>${done?"Review":unlocked?"Start →":"🔒 Locked"}</button>`;
+      unit.innerHTML=`<div class="unit-node">${done?"✓":level.icon}</div><div><p class="unit-title">${esc(lesson.title)}</p><p class="unit-description">${esc(lesson.desc)}</p><div class="unit-meta">${lessonCount(lesson)} questions · ${lesson.xp} XP${done?` · <span class="stars-mini">${starsHTML((state.stars||{})[lesson.id]||0)}</span>`:""}</div></div><button class="unit-btn" ${unlocked?"":"disabled"}>${done?"Review":unlocked?"Start →":"🔒 Locked"}</button>`;
       unit.querySelector("button").addEventListener("click",()=>startLesson(level,lesson));path.appendChild(unit);});});
   // practice
   const dueN=dueMistakes().length;$("mistake-count").textContent=!state.mistakes.length?"All clear!":dueN?dueN+" due today":"Nothing due · "+state.mistakes.length+" saved";
@@ -500,6 +504,58 @@ function openAsk(){
   setTimeout(()=>{try{inp.focus();}catch{}},120);}
 on("ask-btn","click",openAsk);
 
+/* ---------------- Daily reminder + leaderboard (needs Vercel + Supabase) ---------------- */
+// Paste the PUBLIC key here (from: npx web-push generate-vapid-keys). Public key is safe on GitHub.
+const VAPID_PUBLIC="PASTE_VAPID_PUBLIC_KEY_HERE";
+const REMIND_HOURS=[[7,"7 AM"],[8,"8 AM"],[12,"12 PM"],[16,"4 PM"],[18,"6 PM"],[19,"7 PM"],[20,"8 PM"],[21,"9 PM"]];
+const apiReady=()=>location.protocol!=="file:"&&VAPID_PUBLIC.indexOf("PASTE")!==0;
+function b64ToU8(b){const pad="=".repeat((4-b.length%4)%4);const raw=atob((b+pad).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));}
+async function enableReminder(hour){
+  if(!("serviceWorker" in navigator)||!("PushManager" in window)){showToast("Notifications are not supported here. On iPhone, add the app to Home Screen first.");return;}
+  if(!apiReady()){showToast("Reminder is not set up yet. Open the app from the Vercel link.");return;}
+  const perm=await Notification.requestPermission();
+  if(perm!=="granted"){showToast("Notifications were not allowed.");return;}
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(VAPID_PUBLIC)});
+  const r=await fetch("/api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subscription:sub.toJSON(),hour,offset:-new Date().getTimezoneOffset()})});
+  if(!r.ok){showToast("Could not save the reminder. Try again.");return;}
+  state.settings.reminderHour=hour;saveState();showToast("Reminder set ✅");renderReminderBox();
+}
+async function disableReminder(){
+  const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
+  if(sub){await fetch("/api/subscribe",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})}).catch(()=>{});await sub.unsubscribe();}
+  state.settings.reminderHour=null;saveState();showToast("Reminder turned off");renderReminderBox();
+}
+function renderReminderBox(){
+  const box=$("reminder-box");if(!box)return;const h=state.settings.reminderHour;
+  box.innerHTML=`<p class="eyebrow settings-label">DAILY REMINDER 🔔</p>
+    <p class="muted">${apiReady()?"Pick a time. Your phone will show a notification every day at that time.":"Reminder works once the app is opened from its Vercel link."}</p>
+    <div class="chips" id="rem-chips">${REMIND_HOURS.map(([v,l])=>`<button class="chip${h===v?" active":""}" data-h="${v}">${l}</button>`).join("")}</div>
+    <div class="result-actions left"><button class="secondary-btn" id="rem-off">Turn off</button></div>`;
+  box.querySelectorAll("#rem-chips .chip").forEach(c=>c.addEventListener("click",()=>enableReminder(+c.dataset.h).catch(()=>showToast("Reminder could not be set."))));
+  const off=$("rem-off");if(off)off.addEventListener("click",()=>disableReminder().catch(()=>showToast("Could not turn off now.")));
+}
+async function openLeaderboard(){
+  openSheet("Leaderboard 🏆",`<p class="muted">Only your nickname and XP are shown. No photo, no email.</p>
+    <div class="ask-row"><input id="lb-nick" class="type-input" maxlength="16" placeholder="Nickname (2 to 16 letters)" value="${esc(state.profile.name||"")}" aria-label="Nickname"></div>
+    <div class="result-actions left"><button class="primary-btn" id="lb-submit">Share my score (${state.xp} XP)</button></div>
+    <div id="lb-list" class="lb-list"><p class="muted">Loading…</p></div>`);
+  $("lb-submit").addEventListener("click",submitScore);loadBoard();}
+async function loadBoard(){
+  const box=$("lb-list");if(!box)return;
+  try{const r=await fetch("/api/score");if(!r.ok)throw new Error(r.status);const rows=await r.json();
+    box.innerHTML=rows.length?rows.map((x,i)=>`<div class="lb-row${i<3?" top":""}"><b>${i+1}</b><span>${esc(x.nick)}</span><em>${x.xp} XP</em></div>`).join(""):`<p class="muted">No scores yet. Be the first!</p>`;
+  }catch{box.innerHTML=`<p class="muted">Leaderboard works once the app is opened from its Vercel link.</p>`;}}
+async function submitScore(){
+  const nick=($("lb-nick").value||"").trim();
+  if(nick.length<2){showToast("Nickname needs at least 2 letters.");return;}
+  if(state.profile.name!==nick){state.profile.name=nick;saveState();}
+  try{const r=await fetch("/api/score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nick,xp:state.xp})});
+    if(!r.ok)throw new Error(r.status);showToast("Score shared 🏆");loadBoard();
+  }catch{showToast("Could not share the score right now.");}}
+on("lb-btn","click",openLeaderboard);
+
 /* ---------------- Sessions ---------------- */
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
 function syncModalLock(){document.body.classList.toggle("modal-open",!$("lesson-modal").classList.contains("hidden")||!$("sheet-modal").classList.contains("hidden")||!$("tour").classList.contains("hidden"));}
@@ -671,7 +727,9 @@ function resolve(correct,correctText,userAnswer,opts){
     if(!retry){s.correct++;state.totalCorrect++;s.combo++;s.bestCombo=Math.max(s.bestCombo,s.combo);state.bestCombo=Math.max(state.bestCombo,s.combo);
       const base=s.kind==="lesson"?5:s.kind==="speed"?3:2,bonus=s.kind==="lesson"&&s.combo>=3?Math.min(s.combo-2,3):0;gain=base+bonus;state.xp+=gain;s.xpGained+=gain;}
     if(s.kind==="mistakes"){const e=state.srs[srsKey(item)];if(e&&e.box>=4)removeMistake(item);}
-  }else{sfx("wrong");s.combo=0;
+    if(gain)floatText(`+${gain} XP`,"xp");
+    if(!retry&&s.combo>=3)floatText(`COMBO ×${s.combo}!`,"combo");
+  }else{sfx("wrong");s.combo=0;shakeLesson();
     if(!opts.skipHeart&&s.kind==="lesson")loseHeart();
     if(s.kind!=="mistakes"&&s.kind!=="leveltest"&&!retry)addMistake(item);
     if(!retry&&s.kind!=="speed"&&s.kind!=="leveltest")s.queue.push({...clone(item),_retry:true});}
@@ -710,6 +768,8 @@ function finishSession(){
   const s=session;s.done=true;stopTimer();
   const total=s.total,correct=s.correct,acc=total?Math.round(correct/total*100):0;
   const passed=s.kind==="speed"?correct>=1:correct>=Math.ceil(total*.5),perfect=total>0&&correct===total;
+  const stars=!passed?0:perfect?3:acc>=75?2:1;
+  if(passed&&s.kind==="lesson"){state.stars=state.stars||{};state.stars[s.lesson.id]=Math.max(state.stars[s.lesson.id]||0,stars);}
   const prevRank=rankInfo().idx;let bonus=0,dailyMsg="";
   if(passed){
     if(s.kind==="lesson"){const first=!state.completed.includes(s.lesson.id);
@@ -723,7 +783,7 @@ function finishSession(){
   if(s.kind==="speed")state.speedBest=Math.max(state.speedBest,correct);
   if(total>=4)state.bestAccuracy=Math.max(state.bestAccuracy,acc);
   saveState();const fresh=checkBadges();const rank=rankInfo();const ranked=rank.idx>prevRank;
-  if(passed){sfx(ranked?"rank":"win");confetti(perfect?150:90);}else sfx("lose");
+  if(passed){sfx(ranked?"rank":"win");confetti(perfect?150:90);if(ranked)floatText("RANK UP!","rank");}else sfx("lose");
   render();
   robotTalk(passed?rand(ROBOT_CELEBRATE):rand(ROBOT_TRY));
   const earned=s.xpGained+bonus;
@@ -731,7 +791,7 @@ function finishSession(){
   $("lesson-progress-bar").style.width="100%";heartsUI();
   const title=s.kind==="speed"?(passed?"Speed Round done!":"Time ran out"):passed?(perfect?"Perfect score!":"Amazing work!"):"Keep practising!";
   const sub=passed?(s.kind==="lesson"?"You made progress on your English adventure.":"Great practice session!"):"You need at least half the answers correct to complete this lesson. Try again when you're ready.";
-  $("lesson-screen").innerHTML=`<div class="lesson-result"><div class="result-emoji">${passed?(perfect?"🏆":"🎉"):"💪"}</div><p class="lesson-kicker">${passed?(s.kind==="lesson"?"QUEST COMPLETE":"SESSION COMPLETE"):"PRACTICE ROUND"}</p><h2>${esc(title)}</h2><p class="muted">${esc(sub)}</p>
+  $("lesson-screen").innerHTML=`<div class="lesson-result"><div class="result-emoji">${passed?(perfect?"🏆":"🎉"):"💪"}</div><p class="lesson-kicker">${passed?(s.kind==="lesson"?"QUEST COMPLETE":"SESSION COMPLETE"):"PRACTICE ROUND"}</p><h2>${esc(title)}</h2><div class="star-row">${starsHTML(stars)}</div><p class="muted">${esc(sub)}</p>
     <div class="result-stats"><div><b>⭐ +${earned}</b><span>XP earned</span></div><div><b>🎯 ${acc}%</b><span>${correct} of ${total} correct</span></div><div><b>⚡ ×${s.bestCombo}</b><span>Best combo</span></div></div>
     ${ranked?`<div class="banner rank">${rank.cur.emoji} Rank up! You are now a <b>${esc(rank.cur.name)}</b></div>`:""}${dailyMsg?`<div class="banner goal">${dailyMsg}</div>`:""}
     ${fresh.map(b=>`<div class="banner badge-up">${b.icon} Badge unlocked: <b>${esc(b.name)}</b></div>`).join("")}
@@ -773,6 +833,7 @@ function openSettings(){
     <p class="eyebrow settings-label">ROBOT LANGUAGE</p><div class="chips" id="robot-lang-chips">${[["en","English"],["or","ଓଡ଼ିଆ"],["hi","हिंदी"]].map(([v,l])=>`<button class="chip${robotLangNow()===v?" active":""}" data-rl="${v}">${l}</button>`).join("")}</div>
     ${isStandalone()?"":'<p class="eyebrow settings-label">APP</p><button class="secondary-btn" id="set-install">📲 Install app</button>'}
     <p class="eyebrow settings-label">THEME</p><div class="chips" id="theme-chips">${[["auto","Auto"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<button class="chip${state.settings.theme===v?" active":""}" data-theme="${v}">${l}</button>`).join("")}</div>
+    <div id="reminder-box"></div>
     <p class="eyebrow settings-label">WELCOME TOUR</p><button class="secondary-btn" id="replay-tour">🎓 Replay welcome tour</button>
     <p class="eyebrow settings-label">BACKUP & TRANSFER</p><p class="muted">Copy this code to keep your progress safe or move it to another device. Paste a code and tap Restore to load it.</p>
     <textarea id="backup-code" class="backup" rows="3" spellcheck="false" aria-label="Backup code">${esc(b64e(JSON.stringify(state)))}</textarea>
@@ -784,6 +845,7 @@ function openSettings(){
   $("set-robot").addEventListener("change",e=>{state.settings.robotVoice=e.target.checked;saveState();if(!e.target.checked)speechSynthesis.cancel();});
   document.querySelectorAll("#robot-lang-chips .chip").forEach(c=>c.addEventListener("click",()=>setRobotLang(c.dataset.rl)));
   $("replay-tour").addEventListener("click",replayTour);
+  renderReminderBox();
   $("set-music").addEventListener("change",e=>{state.settings.music=e.target.checked;gestured=true;saveState();applyMusic();});
   $("set-mvol").addEventListener("input",e=>{state.settings.musicVol=e.target.value/100;gestured=true;if(state.settings.music)applyMusic();});
   $("set-mvol").addEventListener("change",saveState);

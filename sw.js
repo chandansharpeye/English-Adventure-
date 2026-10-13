@@ -1,4 +1,4 @@
-const CACHE_NAME = "oe-adventure-v9-cbot-update";
+const CACHE_NAME = "oe-adventure-v11-reminder";
 const APP_FILES = [
   "./", "./index.html", "./offline.html", "./styles.css", "./audio.js", "./data.js", "./app.js", "./adventure-lab.js", "./v2-upgrade.js", "./manifest.json",
   "./cbot-ai.js", "./cbot-ai.css", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-maskable-192.png",
@@ -35,4 +35,18 @@ self.addEventListener("fetch", event => {
       )
     )
   );
+});
+
+// Daily reminder: show the notification sent by the server, and open the app when tapped.
+self.addEventListener("push", event => {
+  let d = { title: "O-E Adventure", body: "Time to practise!", url: "/" };
+  try { d = Object.assign(d, event.data.json()); } catch (e) {}
+  event.waitUntil(self.registration.showNotification(d.title, {
+    body: d.body, icon: "assets/icon-192.png", badge: "assets/icon-192.png", data: { url: d.url }
+  }));
+});
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(clients.openWindow(url));
 });
